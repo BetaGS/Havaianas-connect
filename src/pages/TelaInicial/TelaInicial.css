@@ -1,0 +1,290 @@
+/* TelaInicial.css */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Botão de toggle modo escuro/claro */
+.theme-toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50px;
+  padding: 12px 18px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 1000;
+}
+
+.theme-toggle:hover {
+  transform: scale(1.05);
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Emblema da Loja */
+.emblema-loja {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 3rem;
+  animation: fadeInUp 0.6s ease;
+}
+
+.icone-loja {
+  font-size: 4rem;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+  margin-bottom: 0.5rem;
+}
+
+.emblema-loja p {
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+/* ===== MODO CLARO (original - vermelho/branco) ===== */
+.light-mode {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+}
+
+.light-mode .hora {
+  color: white;
+}
+
+.light-mode .marca h1,
+.light-mode .marca h2 {
+  color: white;
+}
+
+.light-mode .emblema-loja p {
+  color: white;
+}
+
+.light-mode .loja-card {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+}
+
+.light-mode .loja-card:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.light-mode .loja-card p {
+  color: white;
+}
+
+.light-mode .status {
+  background: rgba(255, 255, 255, 0.3);
+  color: white;
+}
+
+.light-mode .theme-toggle {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+/* ===== MODO ESCURO (preto/vermelho) ===== */
+.dark-mode {
+  background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%);
+}
+
+.dark-mode .marca h1 {
+  color: #dc2626;
+}
+
+.dark-mode .marca h2 {
+  color: #ffffff;
+}
+
+.dark-mode .emblema-loja p {
+  color: #dc2626;
+}
+
+.dark-mode .loja-card {
+  background: rgba(220, 38, 38, 0.1);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+}
+
+.dark-mode .loja-card:hover {
+  background: rgba(220, 38, 38, 0.2);
+  border-color: rgba(220, 38, 38, 0.5);
+}
+
+.dark-mode .loja-card p {
+  color: #ffffff;
+}
+
+.dark-mode .loja-card span:first-of-type {
+  color: #dc2626;
+}
+
+.dark-mode .status {
+  background: rgba(220, 38, 38, 0.2);
+  color: #dc2626;
+  border: 1px solid rgba(220, 38, 38, 0.3);
+}
+
+.dark-mode .theme-toggle {
+  background: rgba(220, 38, 38, 0.2);
+  border-color: rgba(220, 38, 38, 0.3);
+  color: #dc2626;
+}
+
+.dark-mode .theme-toggle:hover {
+  background: rgba(220, 38, 38, 0.3);
+}
+
+/* ===== ESTILOS GLOBAIS (compartilhados) ===== */
+.container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Montserrat', 'Segoe UI', system-ui, sans-serif;
+  padding: 20px;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+/* Marca Havaianas Connect */
+.marca {
+  text-align: center;
+  margin-bottom: 2rem;
+  animation: fadeInDown 0.6s ease;
+}
+
+.marca h1 {
+  font-size: 3rem;
+  font-weight: 800;
+  letter-spacing: 8px;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.marca h2 {
+  font-size: 1.5rem;
+  font-weight: 500;
+  letter-spacing: 12px;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+}
+
+/* Seção de lojas */
+.lojas {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  animation: fadeInUp 0.6s ease 0.2s both;
+}
+
+.loja-card {
+  backdrop-filter: blur(10px);
+  border-radius: 24px;
+  padding: 1.5rem 2rem;
+  text-align: center;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  min-width: 200px;
+}
+
+.loja-card:hover {
+  transform: scale(1.05);
+}
+
+.loja-card span:first-of-type {
+  font-size: 2.5rem;
+  display: block;
+  margin-bottom: 0.8rem;
+}
+
+.loja-card p {
+  font-weight: 700;
+  font-size: 1.1rem;
+  letter-spacing: 1px;
+  margin-bottom: 0.8rem;
+}
+
+.status {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 20px;
+  letter-spacing: 1px;
+}
+
+/*animações */
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsivo */
+@media (max-width: 600px) {
+  .marca h1 {
+    font-size: 2rem;
+    letter-spacing: 4px;
+  }
+
+  .marca h2 {
+    font-size: 1rem;
+    letter-spacing: 6px;
+  }
+
+  .icone-loja {
+    font-size: 3rem;
+  }
+
+  .lojas {
+    gap: 1rem;
+  }
+
+  .loja-card {
+    padding: 1rem 1.5rem;
+    min-width: 160px;
+  }
+
+  .loja-card span:first-of-type {
+    font-size: 2rem;
+  }
+
+  .loja-card p {
+    font-size: 0.9rem;
+  }
+
+  .theme-toggle {
+    top: 10px;
+    right: 10px;
+    padding: 8px 14px;
+    font-size: 1rem;
+  }
+}

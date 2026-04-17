@@ -1,0 +1,460 @@
+/* TelaGerentePedidos.css */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.gerente-pedidos-container {
+  min-height: 100vh;
+  padding: 80px 20px 40px;
+  font-family: 'Montserrat', 'Segoe UI', system-ui, sans-serif;
+  transition: all 0.3s ease;
+}
+
+.light-mode {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  color: white;
+}
+
+.dark-mode {
+  background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%);
+  color: white;
+}
+
+/* Botões */
+.theme-toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50px;
+  padding: 12px 18px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 1000;
+}
+
+.btn-voltar {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50px;
+  padding: 10px 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 1000;
+  font-family: inherit;
+  color: white;
+}
+
+/* Banner da gerente */
+.gerente-banner {
+  background: linear-gradient(90deg, #dc2626, #b91c1c, #dc2626);
+  padding: 12px;
+  text-align: center;
+  border-radius: 50px;
+  margin-bottom: 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  font-weight: bold;
+  animation: pulse-banner 1.5s infinite;
+}
+
+@keyframes pulse-banner {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.01);
+  }
+}
+
+.gerente-pedidos-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.gerente-pedidos-header h1 {
+  font-size: 1.8rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+}
+
+/* Abas */
+.abas {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.aba {
+  background: none;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: white;
+  opacity: 0.7;
+  transition: all 0.3s;
+  font-family: inherit;
+  position: relative;
+}
+
+.aba.ativa {
+  opacity: 1;
+}
+
+.aba.ativa::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: #dc2626;
+  border-radius: 3px;
+}
+
+/* Buscador */
+.buscador {
+  max-width: 400px;
+  margin: 0 auto 2rem;
+  position: relative;
+}
+
+.buscador input {
+  width: 100%;
+  padding: 12px 20px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50px;
+  font-size: 0.9rem;
+  color: white;
+  font-family: inherit;
+}
+
+.buscador input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Catálogo */
+.catalogo {
+  max-width: 1400px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.produtos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.produto-card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  padding: 1.5rem;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.gerente-produto:hover {
+  transform: translateY(-5px);
+  border-color: #dc2626;
+  box-shadow: 0 5px 20px rgba(220, 38, 38, 0.3);
+}
+
+.produto-imagem {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.produto-nome {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.produto-preco {
+  font-size: 1.3rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+  color: #ffd700;
+}
+
+.tamanhos-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.tamanho-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: white;
+}
+
+.tamanho-btn:hover {
+  background: #dc2626;
+  transform: scale(1.05);
+}
+
+/* Carrinho da gerente */
+.carrinho-flutuante {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 380px;
+  max-width: calc(100vw - 40px);
+  background: rgba(0, 0, 0, 0.95);
+  border-radius: 20px;
+  padding: 1rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  z-index: 999;
+  animation: slideUp 0.3s ease;
+}
+
+.gerente-carrinho {
+  border: 2px solid #dc2626;
+  box-shadow: 0 0 20px rgba(220, 38, 38, 0.5);
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.carrinho-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.fechar-carrinho {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.carrinho-itens {
+  max-height: 300px;
+  overflow-y: auto;
+  margin-bottom: 1rem;
+}
+
+.carrinho-item {
+  margin-bottom: 0.8rem;
+  padding-bottom: 0.8rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.item-info {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+  font-size: 0.8rem;
+}
+
+.item-nome {
+  font-weight: 600;
+  flex: 1;
+}
+
+.item-preco {
+  color: #ffd700;
+}
+
+.item-controles {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.item-controles button {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: white;
+  font-weight: bold;
+}
+
+.item-controles .remover {
+  background: rgba(220, 38, 38, 0.5);
+}
+
+.carrinho-total {
+  text-align: right;
+  margin: 0.8rem 0;
+  padding-top: 0.8rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-enviar {
+  width: 100%;
+  background: #4caf50;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.gerente-enviar-btn {
+  background: linear-gradient(90deg, #dc2626, #b91c1c);
+  animation: pulse-btn 1s infinite;
+}
+
+@keyframes pulse-btn {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+/* Meus envios */
+.meus-envios {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.envios-titulo {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.pedido-envio {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 15px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.gerente-pedido-envio {
+  border-left: 5px solid #dc2626;
+  background: rgba(220, 38, 38, 0.15);
+}
+
+.gerente-ribbon {
+  background: #dc2626;
+}
+
+.urgente-ribbon {
+  position: absolute;
+  top: 10px;
+  right: -30px;
+  color: white;
+  padding: 4px 30px;
+  font-size: 0.7rem;
+  font-weight: bold;
+  transform: rotate(45deg);
+  animation: pulse-ribbon 1s infinite;
+}
+
+@keyframes pulse-ribbon {
+  0%, 100% {
+    background: #dc2626;
+  }
+  50% {
+    background: #ff4444;
+  }
+}
+
+.pedido-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.pedido-data {
+  font-size: 0.7rem;
+  opacity: 0.7;
+  margin-bottom: 0.5rem;
+}
+
+.pedido-itens {
+  margin: 0.5rem 0;
+  padding: 0.5rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+}
+
+.envio-item {
+  font-size: 0.8rem;
+  padding: 0.2rem 0;
+}
+
+.pedido-conclusao {
+  font-size: 0.7rem;
+  color: #4caf50;
+  margin-top: 0.5rem;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+  .gerente-pedidos-container {
+    padding: 70px 15px 30px;
+  }
+
+  .produtos-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  }
+
+  .carrinho-flutuante {
+    width: calc(100vw - 30px);
+    right: 15px;
+    bottom: 15px;
+  }
+
+  .aba {
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+  }
+}
