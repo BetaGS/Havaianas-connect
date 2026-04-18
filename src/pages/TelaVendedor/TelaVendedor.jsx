@@ -1,14 +1,18 @@
 // src/components/TelaVendedor.jsx
 import React, { useState } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
+import { usePedidos } from '../../contexts/PedidosContext';
 import './TelaVendedor.css';
 
-const TelaVendedor = ({ onVoltar, onFazerPedido, vendedorNome }) => {
+const TelaVendedor = ({ onVoltar, vendedorNome }) => {
   const { darkMode, toggleDarkMode } = useTheme();
+  const { adicionarPedido, pedidos } = usePedidos();
   const [abaAtiva, setAbaAtiva] = useState('catalogo');
   const [busca, setBusca] = useState('');
   const [carrinho, setCarrinho] = useState([]);
-  const [meusPedidos, setMeusPedidos] = useState([]);
+
+  // Filtrar apenas os pedidos deste vendedor
+  const meusPedidos = pedidos.filter(p => p.vendedor === vendedorNome && p.tipo === 'vendedor');
 
   const produtos = [
     { id: 1, nome: 'BRASIL LOGO BEGE', preco: 64.99, imagem: '👡', tamanhos: [33, 35, 37, 39, 41, 43, 45, 47] },
@@ -65,20 +69,15 @@ const TelaVendedor = ({ onVoltar, onFazerPedido, vendedorNome }) => {
     }
 
     const novoPedido = {
-      id: Date.now(),
       vendedor: vendedorNome,
       tipo: 'vendedor',
       itens: [...carrinho],
-      status: 'pendente',
-      horarioPedido: new Date().toLocaleString(),
-      horarioConclusao: null,
       urgencia: false
     };
 
-    onFazerPedido(novoPedido);
-    setMeusPedidos([novoPedido, ...meusPedidos]);
+    adicionarPedido(novoPedido);
     setCarrinho([]);
-    alert(`Pedido #${novoPedido.id} enviado para o estoque!`);
+    alert(`Pedido enviado para o estoque!`);
   };
 
   return (
@@ -98,7 +97,7 @@ const TelaVendedor = ({ onVoltar, onFazerPedido, vendedorNome }) => {
           📦 CATÁLOGO
         </button>
         <button className={`aba ${abaAtiva === 'envios' ? 'ativa' : ''}`} onClick={() => setAbaAtiva('envios')}>
-          📤 MEUS ENVIOS
+          📤 MEUS ENVIOS ({meusPedidos.length})
         </button>
       </div>
 
@@ -163,6 +162,7 @@ const TelaVendedor = ({ onVoltar, onFazerPedido, vendedorNome }) => {
         </div>
       ) : (
         <div className="meus-envios">
+          <h2 className="envios-titulo">📋 MEUS PEDIDOS</h2>
           {meusPedidos.length === 0 ? (
             <div className="sem-pedidos"><p>📭 Você ainda não fez nenhum pedido</p></div>
           ) : (
@@ -170,13 +170,19 @@ const TelaVendedor = ({ onVoltar, onFazerPedido, vendedorNome }) => {
               <div key={pedido.id} className={`pedido-envio ${pedido.status}`}>
                 <div className="pedido-header">
                   <span className="pedido-id">Pedido #{pedido.id}</span>
-                  <span className={`status ${pedido.status}`}>{pedido.status === 'pendente' ? '⏳ Pendente' : '✅ Concluído'}</span>
+                  <span className={`status ${pedido.status}`}>
+                    {pedido.status === 'pendente' ? '⏳ Pendente' : '✅ Concluído'}
+                  </span>
                 </div>
                 <div className="pedido-data"><span>📅 {pedido.horarioPedido}</span></div>
                 <div className="pedido-itens">
-                  {pedido.itens.map((item, idx) => (<div key={idx} className="envio-item">{item.nome} - Tam {item.tamanho} x{item.quantidade}</div>))}
+                  {pedido.itens.map((item, idx) => (
+                    <div key={idx} className="envio-item">{item.nome} - Tam {item.tamanho} x{item.quantidade}</div>
+                  ))}
                 </div>
-                {pedido.horarioConclusao && (<div className="pedido-conclusao">✅ Concluído em: {pedido.horarioConclusao}</div>)}
+                {pedido.horarioConclusao && (
+                  <div className="pedido-conclusao">✅ Concluído em: {pedido.horarioConclusao}</div>
+                )}
               </div>
             ))
           )}

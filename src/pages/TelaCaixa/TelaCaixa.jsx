@@ -1,22 +1,23 @@
 // src/components/TelaCaixa.jsx
 import React, { useState } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
+import { usePedidos } from '../../contexts/PedidosContext';
 import './TelaCaixa.css';
 
-const TelaCaixa = ({ onVoltar, onFazerPedido, caixaNome }) => {
+const TelaCaixa = ({ onVoltar, caixaNome }) => {
   const { darkMode, toggleDarkMode } = useTheme();
+  const { adicionarPedido, pedidos } = usePedidos();
   const [abaAtiva, setAbaAtiva] = useState('catalogo');
   const [busca, setBusca] = useState('');
   const [carrinho, setCarrinho] = useState([]);
-  const [meusPedidos, setMeusPedidos] = useState([]);
+
+  const meusPedidos = pedidos.filter(p => p.caixa === caixaNome && p.tipo === 'caixa');
 
   const produtos = [
     { id: 1, nome: 'BRASIL LOGO BEGE', preco: 64.99, imagem: '👡', tamanhos: [33, 35, 37, 39, 41, 43, 45, 47] },
     { id: 2, nome: 'BRASIL LOGO BRANCA', preco: 64.99, imagem: '👡', tamanhos: [33, 35, 37, 39, 41, 43, 45, 47] },
     { id: 3, nome: 'BRASIL LOGO PRETA', preco: 64.99, imagem: '👡', tamanhos: [33, 35, 37, 39, 41, 43, 45, 47] },
-    { id: 4, nome: 'BRASIL LOGO AZUL ROYAL', preco: 59.99, imagem: '👡', tamanhos: [33, 35, 37, 39, 41, 43, 45, 47] },
-    { id: 5, nome: 'HAVAIANAS SLIM ROSA', preco: 54.99, imagem: '👡', tamanhos: [35, 36, 37, 38, 39, 40] },
-    { id: 6, nome: 'TRADICIONAL AZUL', preco: 49.99, imagem: '👡', tamanhos: [37, 38, 39, 40, 41, 42, 43, 44] }
+    { id: 4, nome: 'BRASIL LOGO AZUL ROYAL', preco: 59.99, imagem: '👡', tamanhos: [33, 35, 37, 39, 41, 43, 45, 47] }
   ];
 
   const produtosFiltrados = produtos.filter(produto =>
@@ -67,20 +68,15 @@ const TelaCaixa = ({ onVoltar, onFazerPedido, caixaNome }) => {
     }
 
     const novoPedido = {
-      id: Date.now(),
       caixa: caixaNome,
       tipo: 'caixa',
       itens: [...carrinho],
-      status: 'pendente',
-      horarioPedido: new Date().toLocaleString(),
-      horarioConclusao: null,
-      urgencia: true // Pedidos de caixa são urgentes!
+      urgencia: true
     };
 
-    onFazerPedido(novoPedido);
-    setMeusPedidos([novoPedido, ...meusPedidos]);
+    adicionarPedido(novoPedido);
     setCarrinho([]);
-    alert(`🚨 PEDIDO URGENTE #${novoPedido.id} enviado para o estoque!`);
+    alert(`🚨 PEDIDO URGENTE DO CAIXA enviado para o estoque!`);
   };
 
   return (
@@ -90,7 +86,6 @@ const TelaCaixa = ({ onVoltar, onFazerPedido, caixaNome }) => {
       </button>
       <button className="btn-voltar" onClick={onVoltar}>← Voltar</button>
 
-      {/* Banner de urgência */}
       <div className="urgente-banner">
         <span className="urgente-icon">🚨</span>
         <span>PEDIDOS URGENTES - ATENDIMENTO PRIORITÁRIO</span>
@@ -107,7 +102,7 @@ const TelaCaixa = ({ onVoltar, onFazerPedido, caixaNome }) => {
           📦 CATÁLOGO
         </button>
         <button className={`aba ${abaAtiva === 'envios' ? 'ativa' : ''}`} onClick={() => setAbaAtiva('envios')}>
-          📤 MEUS ENVIOS URGENTES
+          📤 MEUS ENVIOS URGENTES ({meusPedidos.length})
         </button>
       </div>
 
@@ -176,9 +171,7 @@ const TelaCaixa = ({ onVoltar, onFazerPedido, caixaNome }) => {
         <div className="meus-envios">
           <h2 className="envios-titulo">📋 MEUS PEDIDOS URGENTES</h2>
           {meusPedidos.length === 0 ? (
-            <div className="sem-pedidos">
-              <p>📭 Você ainda não fez nenhum pedido urgente</p>
-            </div>
+            <div className="sem-pedidos"><p>📭 Você ainda não fez nenhum pedido urgente</p></div>
           ) : (
             meusPedidos.map(pedido => (
               <div key={pedido.id} className={`pedido-envio urgente-envio ${pedido.status}`}>
@@ -189,20 +182,14 @@ const TelaCaixa = ({ onVoltar, onFazerPedido, caixaNome }) => {
                     {pedido.status === 'pendente' ? '⏳ Pendente - Prioridade' : '✅ Concluído'}
                   </span>
                 </div>
-                <div className="pedido-data">
-                  <span>📅 {pedido.horarioPedido}</span>
-                </div>
+                <div className="pedido-data"><span>📅 {pedido.horarioPedido}</span></div>
                 <div className="pedido-itens">
                   {pedido.itens.map((item, idx) => (
-                    <div key={idx} className="envio-item">
-                      {item.nome} - Tam {item.tamanho} x{item.quantidade}
-                    </div>
+                    <div key={idx} className="envio-item">{item.nome} - Tam {item.tamanho} x{item.quantidade}</div>
                   ))}
                 </div>
                 {pedido.horarioConclusao && (
-                  <div className="pedido-conclusao">
-                    ✅ Concluído em: {pedido.horarioConclusao}
-                  </div>
+                  <div className="pedido-conclusao">✅ Concluído em: {pedido.horarioConclusao}</div>
                 )}
               </div>
             ))

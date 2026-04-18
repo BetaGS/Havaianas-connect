@@ -1,6 +1,7 @@
 // src/components/LojaShopping45.jsx
 import React, { useState } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
+import { usePedidos } from '../../contexts/PedidosContext';
 import TelaVendedor from '../TelaVendedor/TelaVendedor';
 import TelaEstoquista from '../TelaEstoquista/TelaEstoquista';
 import TelaGerente from '../TelaGerente/TelaGerente';
@@ -9,17 +10,17 @@ import './LojaShopping45.css';
 
 const LojaShopping45 = ({ onVoltar }) => {
   const { darkMode, toggleDarkMode } = useTheme();
+  const { pedidos, adicionarPedido, atualizarPedido } = usePedidos();
   const [telaAtual, setTelaAtual] = useState('principal');
   const [vendedorSelecionado, setVendedorSelecionado] = useState(null);
-  const [caixaSelecionado, setCaixaSelecionado] = useState(null); // Estado movido para cá
-  const [pedidos, setPedidos] = useState([]);
+  const [caixaSelecionado, setCaixaSelecionado] = useState(null);
 
   const funcionarios = {
     vendedores: [
       { nome: 'Gab', icone: '👩‍💼', cor: '#ff6b6b' },
       { nome: 'Vanessa', icone: '👩‍🦰', cor: '#ff6b6b' },
-      { nome: 'Daiana', icone: '👩‍🦰', cor: '#ff6b6b' },
-      { nome: 'Antônia', icone: '👩‍🦰', cor: '#ff6b6b' }
+      { nome: 'Daiana', icone: '👩‍🦱', cor: '#ff6b6b' },
+      { nome: 'Antônia', icone: '👵', cor: '#ff6b6b' }
     ],
     caixas: [
       { nome: 'Luciane', icone: '💰', cor: '#4ecdc4' },
@@ -34,67 +35,51 @@ const LojaShopping45 = ({ onVoltar }) => {
     ]
   };
 
-  const fazerPedido = (novoPedido) => {
-    setPedidos([...pedidos, novoPedido]);
-  };
-
-  const atualizarPedido = (pedidoId, atualizacao) => {
-    setPedidos(pedidos.map(pedido =>
-      pedido.id === pedidoId ? { ...pedido, ...atualizacao } : pedido
-    ));
-  };
-
-  // --- LÓGICA DE TROCA DE TELAS ---
-
+  // Tela do Vendedor
   if (telaAtual === 'vendedor' && vendedorSelecionado) {
     return (
       <TelaVendedor
         onVoltar={() => setTelaAtual('principal')}
-        onFazerPedido={fazerPedido}
         vendedorNome={vendedorSelecionado}
       />
     );
   }
 
-  if (telaAtual === 'caixa') {
+  // Tela do Caixa
+  if (telaAtual === 'caixa' && caixaSelecionado) {
     return (
       <TelaCaixa
         onVoltar={() => setTelaAtual('principal')}
-        onFazerPedido={fazerPedido}
         caixaNome={caixaSelecionado}
       />
     );
   }
 
+  // Tela do Estoquista
   if (telaAtual === 'estoquista') {
     return (
       <TelaEstoquista
         onVoltar={() => setTelaAtual('principal')}
-        pedidos={pedidos}
-        onAtualizarPedido={atualizarPedido}
       />
     );
   }
 
+  // Tela do Gerente
   if (telaAtual === 'gerente') {
     return (
       <TelaGerente
         onVoltar={() => setTelaAtual('principal')}
-        pedidos={pedidos}
       />
     );
   }
 
-  // --- TELA PRINCIPAL DA LOJA ---
+  // Tela principal da loja
   return (
     <div className={`perfil-container ${darkMode ? 'dark-mode' : 'light-mode'}`}>
       <button className="theme-toggle" onClick={toggleDarkMode}>
         {darkMode ? '☀️' : '🌙'}
       </button>
-
-      <button className="btn-voltar" onClick={onVoltar}>
-        ← Voltar para lojas
-      </button>
+      <button className="btn-voltar" onClick={onVoltar}>← Voltar para lojas</button>
 
       <div className="cabecalho-loja">
         <div className="icone-loja-grande">🏪</div>
@@ -204,6 +189,38 @@ const LojaShopping45 = ({ onVoltar }) => {
                 <span className="cargo-badge">Gerente</span>
               </div>
             ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Resumo de pedidos */}
+      <div className="resumo-pedidos">
+        <div className="resumo-card">
+          <span>📦</span>
+          <div>
+            <strong>Total de Pedidos</strong>
+            <p>{pedidos.length}</p>
+          </div>
+        </div>
+        <div className="resumo-card">
+          <span>⏳</span>
+          <div>
+            <strong>Pendentes</strong>
+            <p>{pedidos.filter(p => p.status === 'pendente').length}</p>
+          </div>
+        </div>
+        <div className="resumo-card">
+          <span>✅</span>
+          <div>
+            <strong>Concluídos</strong>
+            <p>{pedidos.filter(p => p.status === 'concluido').length}</p>
+          </div>
+        </div>
+        <div className="resumo-card">
+          <span>🚨</span>
+          <div>
+            <strong>Urgentes</strong>
+            <p>{pedidos.filter(p => p.urgencia === true && p.status === 'pendente').length}</p>
           </div>
         </div>
       </div>

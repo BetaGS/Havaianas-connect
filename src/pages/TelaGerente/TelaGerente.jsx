@@ -1,11 +1,13 @@
 // src/components/TelaGerente.jsx
 import React, { useState } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
+import { usePedidos } from '../../contexts/PedidosContext';
 import TelaGerentePedidos from './TelaGerentePedidos';
 import './TelaGerente.css';
 
-const TelaGerente = ({ onVoltar, pedidos, onFazerPedido }) => {
+const TelaGerente = ({ onVoltar }) => {
   const { darkMode, toggleDarkMode } = useTheme();
+  const { pedidos, adicionarPedido } = usePedidos();
   const [filtroTipo, setFiltroTipo] = useState('todos');
   const [modoPedido, setModoPedido] = useState(false);
 
@@ -20,12 +22,10 @@ const TelaGerente = ({ onVoltar, pedidos, onFazerPedido }) => {
     return true;
   });
 
-  // Se estiver no modo de pedidos, mostrar a tela de pedidos da gerente
   if (modoPedido) {
     return (
       <TelaGerentePedidos
         onVoltar={() => setModoPedido(false)}
-        onFazerPedido={onFazerPedido}
       />
     );
   }
@@ -42,7 +42,6 @@ const TelaGerente = ({ onVoltar, pedidos, onFazerPedido }) => {
         <p>Visão geral da loja - Camila</p>
       </div>
 
-      {/* Botão para fazer pedidos */}
       <div className="acoes-gerente">
         <button className="btn-fazer-pedido" onClick={() => setModoPedido(true)}>
           🚨 FAZER PEDIDO URGENTE 🚨
@@ -82,16 +81,16 @@ const TelaGerente = ({ onVoltar, pedidos, onFazerPedido }) => {
 
       <div className="filtros-gerente">
         <button className={filtroTipo === 'todos' ? 'ativo' : ''} onClick={() => setFiltroTipo('todos')}>
-          Todos
+          Todos ({pedidos.length})
         </button>
         <button className={filtroTipo === 'vendedor' ? 'ativo' : ''} onClick={() => setFiltroTipo('vendedor')}>
-          Vendedores
+          Vendedores ({pedidos.filter(p => p.tipo === 'vendedor').length})
         </button>
         <button className={filtroTipo === 'caixa' ? 'ativo' : ''} onClick={() => setFiltroTipo('caixa')}>
-          Caixas (Urgentes)
+          Caixas ({pedidos.filter(p => p.tipo === 'caixa').length})
         </button>
         <button className={filtroTipo === 'gerente' ? 'ativo' : ''} onClick={() => setFiltroTipo('gerente')}>
-          👔 Gerente
+          👔 Gerente ({pedidos.filter(p => p.tipo === 'gerente').length})
         </button>
       </div>
 
@@ -130,7 +129,7 @@ const TelaGerente = ({ onVoltar, pedidos, onFazerPedido }) => {
                 <strong>Itens:</strong>
                 <ul>
                   {pedido.itens.map((item, idx) => (
-                    <li key={idx}>{item.nome} - {item.modelo || `Tam ${item.tamanho}`} x{item.quantidade}</li>
+                    <li key={idx}>{item.nome} - Tam {item.tamanho} x{item.quantidade}</li>
                   ))}
                 </ul>
               </div>

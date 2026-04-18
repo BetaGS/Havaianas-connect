@@ -1,24 +1,23 @@
 // src/components/TelaGerentePedidos.jsx
 import React, { useState } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
+import { usePedidos } from '../../contexts/PedidosContext';
 import './TelaGerentePedidos.css';
 
-const TelaGerentePedidos = ({ onVoltar, onFazerPedido }) => {
+const TelaGerentePedidos = ({ onVoltar }) => {
   const { darkMode, toggleDarkMode } = useTheme();
+  const { adicionarPedido, pedidos } = usePedidos();
   const [abaAtiva, setAbaAtiva] = useState('catalogo');
   const [busca, setBusca] = useState('');
   const [carrinho, setCarrinho] = useState([]);
-  const [meusPedidos, setMeusPedidos] = useState([]);
+
+  const meusPedidos = pedidos.filter(p => p.tipo === 'gerente');
 
   const produtos = [
     { id: 1, nome: 'BRASIL LOGO BEGE', preco: 64.99, imagem: '👡', tamanhos: [33, 35, 37, 39, 41, 43, 45, 47] },
     { id: 2, nome: 'BRASIL LOGO BRANCA', preco: 64.99, imagem: '👡', tamanhos: [33, 35, 37, 39, 41, 43, 45, 47] },
     { id: 3, nome: 'BRASIL LOGO PRETA', preco: 64.99, imagem: '👡', tamanhos: [33, 35, 37, 39, 41, 43, 45, 47] },
-    { id: 4, nome: 'BRASIL LOGO AZUL ROYAL', preco: 59.99, imagem: '👡', tamanhos: [33, 35, 37, 39, 41, 43, 45, 47] },
-    { id: 5, nome: 'HAVAIANAS SLIM ROSA', preco: 54.99, imagem: '👡', tamanhos: [35, 36, 37, 38, 39, 40] },
-    { id: 6, nome: 'TRADICIONAL AZUL', preco: 49.99, imagem: '👡', tamanhos: [37, 38, 39, 40, 41, 42, 43, 44] },
-    { id: 7, nome: 'FLASH PRETO', preco: 79.99, imagem: '👟', tamanhos: [37, 38, 39, 40, 41, 42] },
-    { id: 8, nome: 'KIDS VERMELHO', preco: 44.99, imagem: '👶', tamanhos: [27, 28, 29, 30, 31, 32, 33, 34] }
+    { id: 4, nome: 'BRASIL LOGO AZUL ROYAL', preco: 59.99, imagem: '👡', tamanhos: [33, 35, 37, 39, 41, 43, 45, 47] }
   ];
 
   const produtosFiltrados = produtos.filter(produto =>
@@ -69,22 +68,15 @@ const TelaGerentePedidos = ({ onVoltar, onFazerPedido }) => {
     }
 
     const novoPedido = {
-      id: Date.now(),
       gerente: 'Camila',
       tipo: 'gerente',
       itens: [...carrinho],
-      status: 'pendente',
-      horarioPedido: new Date().toLocaleString(),
-      horarioConclusao: null,
-      urgencia: true // Pedidos da gerente também são urgentes!
+      urgencia: true
     };
 
-    if (onFazerPedido) {
-      onFazerPedido(novoPedido);
-    }
-    setMeusPedidos([novoPedido, ...meusPedidos]);
+    adicionarPedido(novoPedido);
     setCarrinho([]);
-    alert(`🚨 PEDIDO URGENTE DA GERENTE #${novoPedido.id} enviado para o estoque!`);
+    alert(`🚨 PEDIDO URGENTE DA GERENTE enviado para o estoque!`);
   };
 
   return (
@@ -94,7 +86,6 @@ const TelaGerentePedidos = ({ onVoltar, onFazerPedido }) => {
       </button>
       <button className="btn-voltar" onClick={onVoltar}>← Voltar ao Dashboard</button>
 
-      {/* Banner de urgência da gerente */}
       <div className="urgente-banner gerente-banner">
         <span className="urgente-icon">👔</span>
         <span>PEDIDO DA GERENTE - PRIORIDADE MÁXIMA</span>
@@ -111,7 +102,7 @@ const TelaGerentePedidos = ({ onVoltar, onFazerPedido }) => {
           📦 CATÁLOGO
         </button>
         <button className={`aba ${abaAtiva === 'envios' ? 'ativa' : ''}`} onClick={() => setAbaAtiva('envios')}>
-          📤 MEUS PEDIDOS
+          📤 MEUS PEDIDOS ({meusPedidos.length})
         </button>
       </div>
 
@@ -180,9 +171,7 @@ const TelaGerentePedidos = ({ onVoltar, onFazerPedido }) => {
         <div className="meus-envios">
           <h2 className="envios-titulo">📋 MEUS PEDIDOS</h2>
           {meusPedidos.length === 0 ? (
-            <div className="sem-pedidos">
-              <p>📭 Você ainda não fez nenhum pedido</p>
-            </div>
+            <div className="sem-pedidos"><p>📭 Você ainda não fez nenhum pedido</p></div>
           ) : (
             meusPedidos.map(pedido => (
               <div key={pedido.id} className={`pedido-envio gerente-pedido-envio ${pedido.status}`}>
@@ -193,20 +182,14 @@ const TelaGerentePedidos = ({ onVoltar, onFazerPedido }) => {
                     {pedido.status === 'pendente' ? '⏳ Pendente - Prioridade' : '✅ Concluído'}
                   </span>
                 </div>
-                <div className="pedido-data">
-                  <span>📅 {pedido.horarioPedido}</span>
-                </div>
+                <div className="pedido-data"><span>📅 {pedido.horarioPedido}</span></div>
                 <div className="pedido-itens">
                   {pedido.itens.map((item, idx) => (
-                    <div key={idx} className="envio-item">
-                      {item.nome} - Tam {item.tamanho} x{item.quantidade}
-                    </div>
+                    <div key={idx} className="envio-item">{item.nome} - Tam {item.tamanho} x{item.quantidade}</div>
                   ))}
                 </div>
                 {pedido.horarioConclusao && (
-                  <div className="pedido-conclusao">
-                    ✅ Concluído em: {pedido.horarioConclusao}
-                  </div>
+                  <div className="pedido-conclusao">✅ Concluído em: {pedido.horarioConclusao}</div>
                 )}
               </div>
             ))

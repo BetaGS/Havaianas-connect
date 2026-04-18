@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import TelaInicial from './pages/TelaInicial/TelaInicial';
 import LojaShopping45 from './pages/LojaShopping45/LojaShopping45';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { PedidosProvider } from './contexts/PedidosContext';
 
 function App() {
   const [paginaAtual, setPaginaAtual] = useState('home');
@@ -22,12 +23,14 @@ function App() {
 
   return (
     <ThemeProvider>
-      {paginaAtual === 'home' && (
-        <TelaInicial onSelecionarLoja={handleSelecionarLoja} />
-      )}
-      {paginaAtual === 'lojaShopping45' && (
-        <LojaShopping45 onVoltar={handleVoltar} />
-      )}
+      <PedidosProvider>
+        {paginaAtual === 'home' && (
+          <TelaInicial onSelecionarLoja={handleSelecionarLoja} />
+        )}
+        {paginaAtual === 'lojaShopping45' && (
+          <LojaShopping45 onVoltar={handleVoltar} />
+        )}
+      </PedidosProvider>
     </ThemeProvider>
   );
 }
