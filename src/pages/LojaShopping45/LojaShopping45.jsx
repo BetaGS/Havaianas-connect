@@ -10,7 +10,9 @@ import './LojaShopping45.css';
 
 const LojaShopping45 = ({ onVoltar }) => {
   const { darkMode, toggleDarkMode } = useTheme();
+  // Pegamos as funções e o estado do contexto global
   const { pedidos, adicionarPedido, atualizarPedido } = usePedidos();
+  
   const [telaAtual, setTelaAtual] = useState('principal');
   const [vendedorSelecionado, setVendedorSelecionado] = useState(null);
   const [caixaSelecionado, setCaixaSelecionado] = useState(null);
@@ -35,12 +37,15 @@ const LojaShopping45 = ({ onVoltar }) => {
     ]
   };
 
+  // --- LÓGICA DE NAVEGAÇÃO COM PROPS ATUALIZADAS ---
+
   // Tela do Vendedor
   if (telaAtual === 'vendedor' && vendedorSelecionado) {
     return (
       <TelaVendedor
         onVoltar={() => setTelaAtual('principal')}
         vendedorNome={vendedorSelecionado}
+        onFazerPedido={adicionarPedido} // Passando a função do Contexto
       />
     );
   }
@@ -51,6 +56,7 @@ const LojaShopping45 = ({ onVoltar }) => {
       <TelaCaixa
         onVoltar={() => setTelaAtual('principal')}
         caixaNome={caixaSelecionado}
+        onFazerPedido={adicionarPedido} // Passando a função do Contexto
       />
     );
   }
@@ -60,6 +66,8 @@ const LojaShopping45 = ({ onVoltar }) => {
     return (
       <TelaEstoquista
         onVoltar={() => setTelaAtual('principal')}
+        pedidos={pedidos} // Passando os pedidos do Contexto
+        onAtualizarPedido={atualizarPedido} // Passando a função do Contexto
       />
     );
   }
@@ -69,11 +77,13 @@ const LojaShopping45 = ({ onVoltar }) => {
     return (
       <TelaGerente
         onVoltar={() => setTelaAtual('principal')}
+        pedidos={pedidos}
+        onFazerPedido={adicionarPedido} // Gerente também pode precisar fazer pedidos urgentes
       />
     );
   }
 
-  // Tela principal da loja
+  // --- RENDERIZAÇÃO DA TELA PRINCIPAL ---
   return (
     <div className={`perfil-container ${darkMode ? 'dark-mode' : 'light-mode'}`}>
       <button className="theme-toggle" onClick={toggleDarkMode}>
@@ -193,7 +203,7 @@ const LojaShopping45 = ({ onVoltar }) => {
         </div>
       </div>
 
-      {/* Resumo de pedidos */}
+      {/* Resumo de pedidos (Dashboard Inferior) */}
       <div className="resumo-pedidos">
         <div className="resumo-card">
           <span>📦</span>
