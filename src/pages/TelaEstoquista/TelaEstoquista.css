@@ -1,17 +1,92 @@
+/* TelaEstoquista.css */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.estoquista-container {
+  min-height: 100vh;
+  padding: 80px 20px 40px;
+  font-family: 'Montserrat', 'Segoe UI', system-ui, sans-serif;
+  transition: all 0.3s ease;
+}
+
+/* Modo Claro */
+.light-mode {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  color: white;
+}
+
+/* Modo Escuro */
+.dark-mode {
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+  color: white;
+}
+
+/* Botões flutuantes */
+.theme-toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50px;
+  padding: 12px 18px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 1000;
+}
+
+.btn-voltar {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50px;
+  padding: 10px 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 1000;
+  font-family: inherit;
+  color: white;
+}
+
+.theme-toggle:hover,
+.btn-voltar:hover {
+  transform: scale(1.05);
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.dark-mode .theme-toggle,
+.dark-mode .btn-voltar {
+  background: rgba(220, 38, 38, 0.2);
+  color: #dc2626;
+  border-color: rgba(220, 38, 38, 0.3);
+}
+
 /* Status do servidor */
 .server-status {
   position: fixed;
-  top: 10px;
+  top: 20px;
   right: 100px;
   background: rgba(0, 0, 0, 0.7);
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 0.7rem;
+  backdrop-filter: blur(10px);
+  padding: 8px 16px;
+  border-radius: 50px;
+  font-size: 0.75rem;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   z-index: 1000;
-  backdrop-filter: blur(5px);
+  font-weight: 500;
+  transition: all 0.3s ease;
 }
 
 .server-status.online {
@@ -22,7 +97,7 @@
 .server-status.offline {
   background: rgba(244, 67, 54, 0.9);
   color: white;
-  animation: pulse-offline 1s infinite;
+  animation: pulse-offline 1.5s infinite;
 }
 
 .server-status.checking {
@@ -31,8 +106,14 @@
 }
 
 @keyframes pulse-offline {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.02);
+  }
 }
 
 .status-dot {
@@ -49,36 +130,46 @@
 }
 
 @keyframes pulse-dot {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.8);
+  }
 }
 
 .status-latency {
-  font-size: 0.6rem;
+  font-size: 0.65rem;
   opacity: 0.8;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 2px 6px;
+  border-radius: 20px;
 }
 
 .status-usuarios {
   background: rgba(255, 255, 255, 0.2);
-  padding: 2px 6px;
-  border-radius: 10px;
-  font-size: 0.6rem;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 0.65rem;
 }
 
 /* Status WebSocket */
 .ws-status {
   position: fixed;
-  top: 10px;
-  right: 260px;
+  top: 20px;
+  right: 300px;
   background: rgba(0, 0, 0, 0.7);
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 0.7rem;
+  backdrop-filter: blur(10px);
+  padding: 8px 16px;
+  border-radius: 50px;
+  font-size: 0.75rem;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   z-index: 1000;
-  backdrop-filter: blur(5px);
+  font-weight: 500;
 }
 
 .ws-status.conectado {
@@ -89,7 +180,7 @@
 .ws-status.desconectado {
   background: rgba(244, 67, 54, 0.9);
   color: white;
-  animation: pulse-offline 1s infinite;
+  animation: pulse-offline 1.5s infinite;
 }
 
 .status-indicador {
@@ -105,11 +196,44 @@
   animation: none;
 }
 
+/* Header */
+.estoquista-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 30px;
+  animation: fadeInDown 0.6s ease;
+}
+
+.estoquista-header h1 {
+  font-size: 1.8rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #fff, #ffd700);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  margin-bottom: 0.5rem;
+}
+
+.dark-mode .estoquista-header h1 {
+  background: linear-gradient(135deg, #dc2626, #ff6b6b);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.estoquista-header p {
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
 /* Cards de estatísticas */
 .stats-cards {
   display: flex;
   justify-content: center;
-  gap: 1rem;
+  gap: 1.5rem;
   margin-bottom: 2rem;
   flex-wrap: wrap;
 }
@@ -117,34 +241,42 @@
 .stat-card {
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
-  border-radius: 15px;
-  padding: 0.8rem 1.2rem;
+  border-radius: 20px;
+  padding: 1rem 1.5rem;
   display: flex;
   align-items: center;
-  gap: 0.8rem;
+  gap: 1rem;
   transition: all 0.3s ease;
-  min-width: 120px;
+  min-width: 140px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .stat-card:hover {
-  transform: translateY(-3px);
+  transform: translateY(-5px);
   background: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.dark-mode .stat-card:hover {
+  background: rgba(220, 38, 38, 0.2);
 }
 
 .stat-icon {
-  font-size: 1.8rem;
+  font-size: 2rem;
 }
 
 .stat-card h3 {
-  font-size: 1.3rem;
+  font-size: 1.5rem;
   font-weight: 800;
   margin: 0;
+  line-height: 1;
 }
 
 .stat-card p {
   font-size: 0.7rem;
   opacity: 0.7;
   margin: 0;
+  margin-top: 4px;
 }
 
 .stat-card.pendente h3 {
@@ -156,29 +288,314 @@
   animation: pulse-number 1s infinite;
 }
 
-/* Alerta de novo pedido melhorado */
+@keyframes pulse-number {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.05);
+  }
+}
+
+/* Filtros */
+.filtros {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.filtros button {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  font-weight: 600;
+  transition: all 0.3s;
+  backdrop-filter: blur(10px);
+  font-family: inherit;
+  font-size: 0.85rem;
+}
+
+.filtros button:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.filtros button.ativo {
+  background: linear-gradient(135deg, #ff9800, #ff5722);
+  box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
+}
+
+.dark-mode .filtros button.ativo {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+}
+
+/* Lista de pedidos */
+.pedidos-list {
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Card de pedido */
+.pedido-card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.pedido-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.6s;
+}
+
+.pedido-card:hover::before {
+  transform: translateX(100%);
+}
+
+.pedido-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.dark-mode .pedido-card:hover {
+  background: rgba(220, 38, 38, 0.15);
+}
+
+/* Pedido urgente */
+.pedido-card.urgente {
+  background: linear-gradient(135deg, rgba(255, 152, 0, 0.15), rgba(255, 87, 34, 0.1));
+  border-left: 5px solid #ff9800;
+  animation: glow-pulse 2s infinite;
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(255, 152, 0, 0);
+  }
+}
+
+/* Pedido concluído */
+.pedido-card.concluido {
+  opacity: 0.7;
+  background: rgba(76, 175, 80, 0.1);
+  border-left: 5px solid #4caf50;
+}
+
+.pedido-card.concluido:hover {
+  opacity: 0.9;
+}
+
+/* Header do pedido */
+.pedido-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.pedido-info {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.pedido-id {
+  font-weight: 800;
+  font-size: 0.85rem;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+
+.pedido-status {
+  font-size: 0.75rem;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+.pedido-status.pendente {
+  background: rgba(255, 152, 0, 0.3);
+  color: #ff9800;
+}
+
+.pedido-status.concluido {
+  background: rgba(76, 175, 80, 0.3);
+  color: #4caf50;
+}
+
+.urgencia-badge {
+  background: #ff9800;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: bold;
+  animation: shake 0.5s infinite;
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-5deg);
+  }
+  75% {
+    transform: rotate(5deg);
+  }
+}
+
+.tipo-pedido {
+  font-size: 0.75rem;
+  padding: 4px 12px;
+  border-radius: 20px;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* Detalhes do pedido */
+.pedido-detalhes {
+  margin: 1rem 0;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 15px;
+}
+
+.pedido-detalhes p {
+  margin: 0.3rem 0;
+  font-size: 0.85rem;
+}
+
+/* Itens do pedido */
+.pedido-itens {
+  margin: 1rem 0;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 15px;
+}
+
+.pedido-itens strong {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.item-pedido {
+  font-size: 0.8rem;
+  padding: 0.3rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.item-pedido:last-child {
+  border-bottom: none;
+}
+
+/* Botão concluir */
+.btn-concluir {
+  background: linear-gradient(135deg, #4caf50, #45a049);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 50px;
+  cursor: pointer;
+  font-weight: 700;
+  transition: all 0.3s;
+  width: 100%;
+  margin-top: 0.5rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+}
+
+.btn-concluir:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 20px rgba(76, 175, 80, 0.4);
+}
+
+/* Sem pedidos */
+.sem-pedidos {
+  text-align: center;
+  padding: 4rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 30px;
+  font-size: 1rem;
+}
+
+.subtexto {
+  font-size: 0.8rem;
+  opacity: 0.6;
+  margin-top: 0.5rem;
+}
+
+/* Alerta de novo pedido */
 .alerta-novo-pedido {
   position: fixed;
-  top: 70px;
+  top: 80px;
   left: 50%;
   transform: translateX(-50%);
   background: linear-gradient(135deg, #2196f3, #1976d2);
-  border-radius: 12px;
-  padding: 12px 20px;
+  border-radius: 16px;
+  padding: 14px 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 15px;
   z-index: 10000;
   animation: slideDown 0.3s ease;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
-  min-width: 280px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  min-width: 300px;
   max-width: 90%;
 }
 
 .alerta-novo-pedido.urgente {
   background: linear-gradient(135deg, #ff9800, #f44336);
   animation: slideDown 0.3s ease, pulse-bg 1s infinite;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateX(-50%) translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse-bg {
+  0%, 100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.15);
+  }
 }
 
 .alerta-conteudo {
@@ -198,6 +615,7 @@
   border-radius: 20px;
   font-size: 0.7rem;
   margin-left: 8px;
+  font-weight: bold;
 }
 
 .alerta-fechar {
@@ -206,96 +624,191 @@
   color: white;
   font-size: 1.2rem;
   cursor: pointer;
-  padding: 0 8px;
+  padding: 4px 8px;
+  border-radius: 50%;
+  transition: all 0.2s;
 }
 
-@keyframes slideDown {
+.alerta-fechar:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Animações */
+@keyframes fadeInDown {
   from {
-    transform: translateX(-50%) translateY(-100%);
     opacity: 0;
+    transform: translateY(-30px);
   }
   to {
-    transform: translateX(-50%) translateY(0);
     opacity: 1;
+    transform: translateY(0);
   }
 }
 
-@keyframes pulse-bg {
-  0%, 100% {
-    filter: brightness(1);
-  }
-  50% {
-    filter: brightness(1.1);
-  }
+/* Scrollbar personalizada */
+::-webkit-scrollbar {
+  width: 10px;
 }
 
-@keyframes shake {
-  0%, 100% { transform: rotate(0deg); }
-  25% { transform: rotate(-10deg); }
-  75% { transform: rotate(10deg); }
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
 }
 
-@keyframes pulse-number {
-  0%, 100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.7;
-    transform: scale(1.05);
-  }
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
 }
 
-/* Responsivo para telas menores */
-@media (max-width: 768px) {
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.dark-mode ::-webkit-scrollbar-track {
+  background: rgba(220, 38, 38, 0.1);
+}
+
+.dark-mode ::-webkit-scrollbar-thumb {
+  background: rgba(220, 38, 38, 0.3);
+}
+
+/* Responsivo */
+@media (max-width: 1024px) {
+  .ws-status {
+    right: 260px;
+  }
+  
   .server-status {
-    top: 10px;
     right: 80px;
-    font-size: 0.6rem;
-    padding: 4px 8px;
+  }
+}
+
+@media (max-width: 768px) {
+  .estoquista-container {
+    padding: 70px 15px 30px;
+  }
+
+  .estoquista-header h1 {
+    font-size: 1.3rem;
+  }
+
+  .server-status,
+  .ws-status {
+    position: fixed;
+    top: auto;
+    bottom: 10px;
+    right: 10px;
+    left: auto;
+    font-size: 0.65rem;
+    padding: 4px 10px;
   }
   
   .ws-status {
-    top: 10px;
-    right: 200px;
-    font-size: 0.6rem;
-    padding: 4px 8px;
+    bottom: 45px;
+    right: 10px;
   }
   
+  .server-status {
+    bottom: 10px;
+    right: 10px;
+  }
+
   .stats-cards {
-    gap: 0.5rem;
+    gap: 0.8rem;
   }
-  
+
   .stat-card {
-    padding: 0.5rem 0.8rem;
-    min-width: 90px;
+    padding: 0.8rem 1rem;
+    min-width: 100px;
   }
-  
+
   .stat-icon {
+    font-size: 1.5rem;
+  }
+
+  .stat-card h3 {
     font-size: 1.2rem;
   }
-  
-  .stat-card h3 {
-    font-size: 1rem;
+
+  .filtros button {
+    padding: 6px 16px;
+    font-size: 0.75rem;
   }
-  
+
+  .pedido-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .pedido-card {
+    padding: 1rem;
+  }
+
   .alerta-novo-pedido {
     top: 60px;
     padding: 10px 15px;
   }
-  
+
   .alerta-icone {
     font-size: 1.2rem;
   }
 }
 
 @media (max-width: 480px) {
-  .server-status {
-    display: none;
+  .stats-cards {
+    flex-direction: column;
+    align-items: center;
   }
   
-  .ws-status {
-    right: 10px;
-    top: 60px;
+  .stat-card {
+    width: 100%;
+    max-width: 200px;
+  }
+  
+  .filtros {
+    gap: 0.5rem;
+  }
+  
+  .filtros button {
+    padding: 5px 12px;
+    font-size: 0.7rem;
+  }
+  
+  .pedido-id,
+  .pedido-status,
+  .urgencia-badge,
+  .tipo-pedido {
+    font-size: 0.65rem;
+    padding: 3px 8px;
+  }
+  
+  .pedido-detalhes p {
+    font-size: 0.75rem;
+  }
+  
+  .item-pedido {
+    font-size: 0.7rem;
+  }
+  
+  .btn-concluir {
+    padding: 10px 20px;
+    font-size: 0.8rem;
+  }
+  
+  .sem-pedidos {
+    padding: 2rem;
+    font-size: 0.9rem;
+  }
+  
+  .alerta-novo-pedido {
+    padding: 8px 12px;
+  }
+  
+  .alerta-conteudo strong {
+    font-size: 0.85rem;
+  }
+  
+  .alerta-conteudo p {
+    font-size: 0.7rem;
   }
 }
