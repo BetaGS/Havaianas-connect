@@ -19,10 +19,10 @@ const LojaShopping45 = ({ onVoltar }) => {
 
   const funcionarios = {
     vendedores: [
-      { nome: 'Gab', icone: '👩‍💼', cor: '#ff6b6b' },
-      { nome: 'Vanessa', icone: '👩‍🦰', cor: '#ff6b6b' },
-      { nome: 'Daiana', icone: '👩‍🦱', cor: '#ff6b6b' },
-      { nome: 'Antônia', icone: '👵', cor: '#ff6b6b' }
+      { nome: 'Gab', icone: '🩴', cor: '#ff6b6b' },
+      { nome: 'Vanessa', icone: '🩴', cor: '#ff6b6b' },
+      { nome: 'Daiana', icone: '🩴', cor: '#ff6b6b' },
+      { nome: 'Antônia', icone: '🩴', cor: '#ff6b6b' }
     ],
     caixas: [
       { nome: 'Luciane', icone: '💰', cor: '#4ecdc4' },
