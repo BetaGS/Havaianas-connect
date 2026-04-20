@@ -1,26 +1,44 @@
 // src/components/TelaGerente.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { usePedidos } from '../../contexts/PedidosContext';
 import TelaGerentePedidos from './TelaGerentePedidos';
+import socketService from '../../services/socket'; // Importante para monitorar online
 import './TelaGerente.css';
 
 const TelaGerente = ({ onVoltar }) => {
   const { darkMode, toggleDarkMode } = useTheme();
-  const { pedidos, adicionarPedido } = usePedidos();
+  const { pedidos } = usePedidos();
   const [filtroTipo, setFiltroTipo] = useState('todos');
   const [modoPedido, setModoPedido] = useState(false);
+  const [conectado, setConectado] = useState(false);
 
+  // Monitorar conexão para o gerente saber se o sistema está operando em tempo real
+  useEffect(() => {
+    const statusConexao = async () => {
+      try {
+        await socketService.connect('Camila', 'gerente');
+        setConectado(true);
+      } catch (err) {
+        setConectado(false);
+      }
+    };
+    statusConexao();
+    return () => socketService.disconnect();
+  }, []);
+
+  // Métricas para os Cards
   const pedidosPendentes = pedidos.filter(p => p.status === 'pendente');
   const pedidosConcluidos = pedidos.filter(p => p.status === 'concluido');
-  const pedidosUrgentes = pedidos.filter(p => p.urgencia === true);
+  const pedidosUrgentes = pedidos.filter(p => p.urgencia === true && p.status === 'pendente');
 
+  // Lógica de Filtro
   const pedidosFiltrados = pedidos.filter(pedido => {
     if (filtroTipo === 'vendedor') return pedido.tipo === 'vendedor';
     if (filtroTipo === 'caixa') return pedido.tipo === 'caixa';
     if (filtroTipo === 'gerente') return pedido.tipo === 'gerente';
     return true;
-  });
+  }).sort((a, b) => b.id - a.id); // Ordenar pelos mais recentes
 
   if (modoPedido) {
     return (
@@ -36,6 +54,12 @@ const TelaGerente = ({ onVoltar }) => {
         {darkMode ? '☀️' : '🌙'}
       </button>
       <button className="btn-voltar" onClick={onVoltar}>← Voltar</button>
+
+      {/* Indicador de Status do Painel */}
+      <div className={`status-conexao-gerente ${conectado ? 'online' : 'offline'}`}>
+        <span className="dot"></span>
+        {conectado ? 'Monitoramento em Tempo Real Ativo' : 'Modo Offline - Visualizando Cache'}
+      </div>
 
       <div className="gerente-header">
         <h1>👔 PAINEL DO GERENTE</h1>
@@ -95,14 +119,16 @@ const TelaGerente = ({ onVoltar }) => {
       </div>
 
       <div className="pedidos-gerente">
-        <h2>📋 Histórico de Pedidos</h2>
+        <h2>📋 Histórico de Atividade</h2>
         {pedidosFiltrados.length === 0 ? (
-          <p className="sem-pedidos">Nenhum pedido encontrado</p>
+          <div className="sem-pedidos-box">
+            <p>Nenhum pedido registrado nesta categoria.</p>
+          </div>
         ) : (
           pedidosFiltrados.map(pedido => (
             <div key={pedido.id} className={`pedido-gerente-card ${pedido.status} ${pedido.urgencia ? 'urgente' : ''}`}>
               <div className="pedido-gerente-header">
-                <div>
+                <div className="id-status-group">
                   <span className="pedido-id">#{pedido.id}</span>
                   <span className={`status-badge ${pedido.status}`}>
                     {pedido.status === 'pendente' ? '⏳ Pendente' : '✅ Concluído'}
@@ -115,23 +141,27 @@ const TelaGerente = ({ onVoltar }) => {
                   {pedido.tipo === 'gerente' && '👔 Gerente'}
                 </span>
               </div>
+              
               <div className="pedido-gerente-detalhes">
-                <p><strong>Solicitante:</strong> {pedido.vendedor || pedido.caixa || pedido.gerente}</p>
-                <p><strong>🕐 Pedido:</strong> {pedido.horarioPedido}</p>
-                {pedido.horarioConclusao && (
-                  <p><strong>✅ Conclusão:</strong> {pedido.horarioConclusao}</p>
-                )}
-                {!pedido.horarioConclusao && pedido.status === 'pendente' && (
-                  <p className="tempo-pendente">⏰ Aguardando conclusão...</p>
+                {/* Aqui está a correção para pegar o nome independente de quem enviou */}
+                <p><strong>Solicitante:</strong> {pedido.solicitante || pedido.vendedor || pedido.caixa || pedido.gerente || 'Não Identificado'}</p>
+                <p><strong>🕐 Abertura:</strong> {pedido.horarioPedido}</p>
+                {pedido.horarioConclusao ? (
+                  <p className="conclusao-texto"><strong>✅ Finalizado:</strong> {pedido.horarioConclusao}</p>
+                ) : (
+                  <p className="tempo-pendente">⏰ Aguardando Estoque...</p>
                 )}
               </div>
+
               <div className="pedido-gerente-itens">
-                <strong>Itens:</strong>
-                <ul>
+                <strong>Itens do Pedido:</strong>
+                <div className="itens-badge-container">
                   {pedido.itens.map((item, idx) => (
-                    <li key={idx}>{item.nome} - Tam {item.tamanho} x{item.quantidade}</li>
+                    <span key={idx} className="item-mini-badge">
+                      {item.nome} (T:{item.tamanho} x{item.quantidade})
+                    </span>
                   ))}
-                </ul>
+                </div>
               </div>
             </div>
           ))

@@ -103,7 +103,10 @@ const TelaVendedor = ({ onVoltar, vendedorNome }) => {
       status: 'pendente'
     };
 
+    // Salva no contexto local para visualização na aba "Meus Pedidos"
     adicionarPedido(novoPedido);
+    
+    // Tenta enviar via Socket
     const enviado = socketService.enviarPedido(novoPedido);
     
     if (enviado && conectado) {
@@ -112,6 +115,7 @@ const TelaVendedor = ({ onVoltar, vendedorNome }) => {
       alert(`⚠️ Pedido #${novoPedido.id} salvo localmente. Servidor offline.`);
     }
     
+    // Limpa o carrinho após o envio
     setCarrinho([]);
   };
 

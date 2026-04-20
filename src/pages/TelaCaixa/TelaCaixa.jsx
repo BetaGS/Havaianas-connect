@@ -1,7 +1,8 @@
 // src/components/TelaCaixa.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // Adicionado useEffect
 import { useTheme } from '../../contexts/ThemeContext';
 import { usePedidos } from '../../contexts/PedidosContext';
+import socketService from '../../services/socket'; // Adicionado import do socket
 import './TelaCaixa.css';
 
 const TelaCaixa = ({ onVoltar, caixaNome }) => {
@@ -10,8 +11,27 @@ const TelaCaixa = ({ onVoltar, caixaNome }) => {
   const [abaAtiva, setAbaAtiva] = useState('catalogo');
   const [busca, setBusca] = useState('');
   const [carrinho, setCarrinho] = useState([]);
+  const [conectado, setConectado] = useState(false); // Estado para feedback visual
 
-  const meusPedidos = pedidos.filter(p => p.caixa === caixaNome && p.tipo === 'caixa');
+  // --- CONFIGURAÇÃO DO TEMPO REAL ---
+  useEffect(() => {
+    const conectarSocket = async () => {
+      try {
+        await socketService.connect(caixaNome, 'caixa');
+        setConectado(true);
+      } catch (error) {
+        console.error('Erro ao conectar socket no Caixa:', error);
+        setConectado(false);
+      }
+    };
+
+    conectarSocket();
+
+    // Desconecta ao sair da tela para evitar bugs
+    return () => socketService.disconnect();
+  }, [caixaNome]);
+
+  const meusPedidos = pedidos.filter(p => p.solicitante === caixaNome && p.tipo === 'caixa');
 
   const produtos = [
     { id: 1, nome: 'BRASIL LOGO BEGE', preco: 64.99, imagem: '👡', tamanhos: [33, 35, 37, 39, 41, 43, 45, 47] },
@@ -67,16 +87,30 @@ const TelaCaixa = ({ onVoltar, caixaNome }) => {
       return;
     }
 
+    // Criando o objeto padronizado para o servidor e estoquista
     const novoPedido = {
-      caixa: caixaNome,
+      id: Date.now(),
+      solicitante: caixaNome, // Estoquista usa esse campo
       tipo: 'caixa',
       itens: [...carrinho],
-      urgencia: true
+      urgencia: true,
+      horarioPedido: new Date().toLocaleString(),
+      status: 'pendente'
     };
 
+    // 1. Salva no contexto local (para aparecer na sua aba "Meus Envios")
     adicionarPedido(novoPedido);
+
+    // 2. Envia via Socket para o Estoquista ver na hora
+    const enviadoComSucesso = socketService.enviarPedido(novoPedido);
+
+    if (enviadoComSucesso) {
+      alert(`🚨 PEDIDO URGENTE enviado em tempo real!`);
+    } else {
+      alert(`⚠️ Pedido salvo localmente, mas o servidor está offline.`);
+    }
+
     setCarrinho([]);
-    alert(`🚨 PEDIDO URGENTE DO CAIXA enviado para o estoque!`);
   };
 
   return (
@@ -85,6 +119,12 @@ const TelaCaixa = ({ onVoltar, caixaNome }) => {
         {darkMode ? '☀️' : '🌙'}
       </button>
       <button className="btn-voltar" onClick={onVoltar}>← Voltar</button>
+
+      {/* Indicador de Conexão */}
+      <div className={`status-conexao ${conectado ? 'conectado' : 'desconectado'}`}>
+        <span className="status-dot"></span>
+        {conectado ? '📡 Conectado ao Estoque' : '⚠️ Offline - Tentando reconectar...'}
+      </div>
 
       <div className="urgente-banner">
         <span className="urgente-icon">🚨</span>

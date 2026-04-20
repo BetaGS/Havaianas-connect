@@ -1,7 +1,8 @@
 // src/components/TelaGerentePedidos.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // Adicionado useEffect
 import { useTheme } from '../../contexts/ThemeContext';
 import { usePedidos } from '../../contexts/PedidosContext';
+import socketService from '../../services/socket'; // Adicionado import do socket
 import './TelaGerentePedidos.css';
 
 const TelaGerentePedidos = ({ onVoltar }) => {
@@ -10,8 +11,29 @@ const TelaGerentePedidos = ({ onVoltar }) => {
   const [abaAtiva, setAbaAtiva] = useState('catalogo');
   const [busca, setBusca] = useState('');
   const [carrinho, setCarrinho] = useState([]);
+  const [conectado, setConectado] = useState(false);
 
-  const meusPedidos = pedidos.filter(p => p.tipo === 'gerente');
+  // --- CONFIGURAÇÃO DO TEMPO REAL ---
+  useEffect(() => {
+    const conectarSocket = async () => {
+      try {
+        // Conecta como Gerente (Camila)
+        await socketService.connect('Camila', 'gerente');
+        setConectado(true);
+      } catch (error) {
+        console.error('Erro ao conectar socket no Gerente:', error);
+        setConectado(false);
+      }
+    };
+
+    conectarSocket();
+
+    // Desconecta ao sair da tela
+    return () => socketService.disconnect();
+  }, []);
+
+  // Filtrar pedidos solicitados pela gerente para exibir no histórico
+  const meusPedidos = pedidos.filter(p => p.solicitante === 'Camila (Gerente)' && p.tipo === 'gerente');
 
   const produtos = [
     { id: 1, nome: 'BRASIL LOGO BEGE', preco: 64.99, imagem: '👡', tamanhos: [33, 35, 37, 39, 41, 43, 45, 47] },
@@ -67,16 +89,30 @@ const TelaGerentePedidos = ({ onVoltar }) => {
       return;
     }
 
+    // Criando o objeto padronizado
     const novoPedido = {
-      gerente: 'Camila',
+      id: Date.now(),
+      solicitante: 'Camila (Gerente)',
       tipo: 'gerente',
       itens: [...carrinho],
-      urgencia: true
+      urgencia: true,
+      horarioPedido: new Date().toLocaleString(),
+      status: 'pendente'
     };
 
+    // 1. Salva no contexto local
     adicionarPedido(novoPedido);
+
+    // 2. Envia via Socket para o Estoque
+    const enviado = socketService.enviarPedido(novoPedido);
+
+    if (enviado && conectado) {
+      alert(`🚨 PEDIDO URGENTE DA GERENTE enviado com sucesso!`);
+    } else {
+      alert(`⚠️ Pedido salvo localmente, mas o servidor está offline.`);
+    }
+    
     setCarrinho([]);
-    alert(`🚨 PEDIDO URGENTE DA GERENTE enviado para o estoque!`);
   };
 
   return (
@@ -85,6 +121,12 @@ const TelaGerentePedidos = ({ onVoltar }) => {
         {darkMode ? '☀️' : '🌙'}
       </button>
       <button className="btn-voltar" onClick={onVoltar}>← Voltar ao Dashboard</button>
+
+      {/* Indicador de Status */}
+      <div className={`status-conexao ${conectado ? 'conectado' : 'desconectado'}`}>
+        <span className="status-dot"></span>
+        {conectado ? '📡 Gerência conectada ao Estoque' : '⚠️ Offline - Tentando reconectar...'}
+      </div>
 
       <div className="urgente-banner gerente-banner">
         <span className="urgente-icon">👔</span>
