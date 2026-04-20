@@ -1,7 +1,7 @@
 // src/components/TelaInicial.jsx
 import React, { useEffect } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
-import { configurarNotificacoes } from '../../services/pushSubscription';
+import { configurarNotificacoes } from '../../services/pushNotification';
 import './TelaInicial.css';
 
 const TelaInicial = ({ onSelecionarLoja }) => {
