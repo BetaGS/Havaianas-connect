@@ -3,12 +3,13 @@ import React, { useState, useEffect } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { usePedidos } from '../../contexts/PedidosContext';
 import TelaGerentePedidos from './TelaGerentePedidos';
-import socketService from '../../services/socket'; // Importante para monitorar online
+import socketService from '../../services/socket'; 
 import './TelaGerente.css';
 
 const TelaGerente = ({ onVoltar }) => {
   const { darkMode, toggleDarkMode } = useTheme();
-  const { pedidos } = usePedidos();
+  // Importando limparPedidosLocal para permitir a limpeza apenas neste aparelho
+  const { pedidos, limparPedidosLocal } = usePedidos();
   const [filtroTipo, setFiltroTipo] = useState('todos');
   const [modoPedido, setModoPedido] = useState(false);
   const [conectado, setConectado] = useState(false);
@@ -38,7 +39,7 @@ const TelaGerente = ({ onVoltar }) => {
     if (filtroTipo === 'caixa') return pedido.tipo === 'caixa';
     if (filtroTipo === 'gerente') return pedido.tipo === 'gerente';
     return true;
-  }).sort((a, b) => b.id - a.id); // Ordenar pelos mais recentes
+  }).sort((a, b) => b.id - a.id); 
 
   if (modoPedido) {
     return (
@@ -69,6 +70,10 @@ const TelaGerente = ({ onVoltar }) => {
       <div className="acoes-gerente">
         <button className="btn-fazer-pedido" onClick={() => setModoPedido(true)}>
           🚨 FAZER PEDIDO URGENTE 🚨
+        </button>
+        {/* Novo botão de limpeza local adicionado aqui */}
+        <button className="btn-limpar-historico-gerente" onClick={limparPedidosLocal}>
+          🗑️ Limpar Meu Painel
         </button>
       </div>
 
@@ -143,7 +148,6 @@ const TelaGerente = ({ onVoltar }) => {
               </div>
               
               <div className="pedido-gerente-detalhes">
-                {/* Aqui está a correção para pegar o nome independente de quem enviou */}
                 <p><strong>Solicitante:</strong> {pedido.solicitante || pedido.vendedor || pedido.caixa || pedido.gerente || 'Não Identificado'}</p>
                 <p><strong>🕐 Abertura:</strong> {pedido.horarioPedido}</p>
                 {pedido.horarioConclusao ? (

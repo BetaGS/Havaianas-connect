@@ -1,4 +1,3 @@
-// src/contexts/PedidosContext.jsx
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const PedidosContext = createContext();
@@ -14,8 +13,13 @@ export const usePedidos = () => {
 export const PedidosProvider = ({ children }) => {
   // Carregar pedidos do localStorage ao iniciar
   const [pedidos, setPedidos] = useState(() => {
-    const savedPedidos = localStorage.getItem('havaianas_pedidos');
-    return savedPedidos ? JSON.parse(savedPedidos) : [];
+    try {
+      const savedPedidos = localStorage.getItem('havaianas_pedidos');
+      return savedPedidos ? JSON.parse(savedPedidos) : [];
+    } catch (error) {
+      console.error("Erro ao carregar localStorage:", error);
+      return [];
+    }
   });
 
   // Salvar pedidos no localStorage sempre que mudar
@@ -24,15 +28,25 @@ export const PedidosProvider = ({ children }) => {
   }, [pedidos]);
 
   // Função para adicionar novo pedido
-  const adicionarPedido = (novoPedido) => {
+  const adicionarPedido = (dadosPedido) => {
+    // Se o pedido já tiver um ID (veio via Socket), usamos ele.
+    // Se não tiver (criado localmente), geramos um novo.
     const pedidoCompleto = {
-      ...novoPedido,
-      id: Date.now(),
-      horarioPedido: new Date().toLocaleString(),
-      status: 'pendente',
-      horarioConclusao: null
+      id: dadosPedido.id || Date.now(),
+      horarioPedido: dadosPedido.horarioPedido || new Date().toLocaleString(),
+      status: dadosPedido.status || 'pendente',
+      horarioConclusao: dadosPedido.horarioConclusao || null,
+      ...dadosPedido, // Espalha o restante dos dados (itens, solicitante, urgencia)
     };
-    setPedidos(prev => [pedidoCompleto, ...prev]);
+
+    setPedidos(prev => {
+      // Evita duplicados (importante para o Socket não inserir o mesmo pedido duas vezes)
+      const jaExiste = prev.find(p => p.id === pedidoCompleto.id);
+      if (jaExiste) return prev;
+      
+      return [pedidoCompleto, ...prev];
+    });
+
     return pedidoCompleto;
   };
 
@@ -43,15 +57,17 @@ export const PedidosProvider = ({ children }) => {
     ));
   };
 
-  // Função para deletar pedido
+  // Função para deletar um pedido específico
   const deletarPedido = (pedidoId) => {
     setPedidos(prev => prev.filter(pedido => pedido.id !== pedidoId));
   };
 
-  // Função para limpar todos os pedidos
-  const limparPedidos = () => {
-    setPedidos([]);
-    localStorage.removeItem('havaianas_pedidos');
+  // Função para limpar APENAS neste aparelho (o que você pediu)
+  const limparPedidosLocal = () => {
+    if (window.confirm("Isso apagará o histórico apenas deste aparelho. Continuar?")) {
+      setPedidos([]);
+      localStorage.removeItem('havaianas_pedidos');
+    }
   };
 
   return (
@@ -60,7 +76,7 @@ export const PedidosProvider = ({ children }) => {
       adicionarPedido,
       atualizarPedido,
       deletarPedido,
-      limparPedidos
+      limparPedidosLocal // Nome alterado para ficar claro que é local
     }}>
       {children}
     </PedidosContext.Provider>

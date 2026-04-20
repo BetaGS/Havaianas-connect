@@ -6,7 +6,8 @@ import './TelaVendedor.css';
 
 const TelaVendedor = ({ onVoltar, vendedorNome }) => {
   const { darkMode, toggleDarkMode } = useTheme();
-  const { adicionarPedido, pedidos } = usePedidos();
+  // Adicionado limparPedidosLocal do PedidosContext
+  const { adicionarPedido, pedidos, limparPedidosLocal } = usePedidos();
   const [abaAtiva, setAbaAtiva] = useState('catalogo');
   const [busca, setBusca] = useState('');
   const [carrinho, setCarrinho] = useState([]);
@@ -103,10 +104,7 @@ const TelaVendedor = ({ onVoltar, vendedorNome }) => {
       status: 'pendente'
     };
 
-    // Salva no contexto local para visualização na aba "Meus Pedidos"
     adicionarPedido(novoPedido);
-    
-    // Tenta enviar via Socket
     const enviado = socketService.enviarPedido(novoPedido);
     
     if (enviado && conectado) {
@@ -115,7 +113,6 @@ const TelaVendedor = ({ onVoltar, vendedorNome }) => {
       alert(`⚠️ Pedido #${novoPedido.id} salvo localmente. Servidor offline.`);
     }
     
-    // Limpa o carrinho após o envio
     setCarrinho([]);
   };
 
@@ -199,9 +196,17 @@ const TelaVendedor = ({ onVoltar, vendedorNome }) => {
         </div>
       ) : (
         <div className="meus-envios">
-          <h2 className="envios-titulo">📋 MEUS PEDIDOS</h2>
+          <div className="envios-header-acoes">
+            <h2 className="envios-titulo">📋 MEUS PEDIDOS</h2>
+            {meusPedidos.length > 0 && (
+              <button className="btn-limpar-historico" onClick={limparPedidosLocal}>
+                🗑️ Limpar Histórico
+              </button>
+            )}
+          </div>
+          
           {meusPedidos.length === 0 ? (
-            <p>📭 Nenhum pedido feito ainda.</p>
+            <p className="sem-pedidos">📭 Nenhum pedido feito ainda.</p>
           ) : (
             meusPedidos.map(pedido => (
               <div key={pedido.id} className={`pedido-envio ${pedido.status}`}>

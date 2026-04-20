@@ -9,15 +9,14 @@ import './TelaEstoquista.css';
 
 const TelaEstoquistaContent = ({ onVoltar }) => {
   const { darkMode, toggleDarkMode } = useTheme();
-  const { pedidos, atualizarPedido, adicionarPedido } = usePedidos();
+  // Importando limparPedidosLocal do seu PedidosContext corrigido
+  const { pedidos, atualizarPedido, adicionarPedido, limparPedidosLocal } = usePedidos();
   const [filtro, setFiltro] = useState('todos');
   const [conectado, setConectado] = useState(false);
   const [novaNotificacao, setNovaNotificacao] = useState(null);
   const [servidorStatus, setServidorStatus] = useState('checking');
   const [latency, setLatency] = useState(null);
 
-  // Criamos uma referência para os pedidos. 
-  // Isso permite que o Socket veja a lista atualizada sem reiniciar o useEffect.
   const pedidosRef = useRef(pedidos);
   useEffect(() => {
     pedidosRef.current = pedidos;
@@ -44,25 +43,18 @@ const TelaEstoquistaContent = ({ onVoltar }) => {
 
     const iniciarConexao = async () => {
       try {
-        // Conecta ao socket (O service já usa Polling primeiro para celulares)
         await socketService.connect('Estoquista', 'estoquista');
         setConectado(true);
 
-        // Configura o que fazer quando um pedido chegar
         socketService.onPedidoRecebido((novoPedido) => {
-          console.log('📦 Socket: Novo pedido detectado!', novoPedido);
-
-          // 1. Verifica se o pedido já existe para não duplicar na tela
           const jaExiste = pedidosRef.current.find(p => p.id === novoPedido.id);
           if (jaExiste) return;
 
-          // 2. Adiciona ao estado global (faz o card aparecer na lista)
           adicionarPedido({
             ...novoPedido,
             status: 'pendente'
           });
 
-          // 3. Notificações Visuais e Sonoras
           setNovaNotificacao(novoPedido);
           new Audio('/notification.mp3').play().catch(() => {});
           
@@ -70,7 +62,6 @@ const TelaEstoquistaContent = ({ onVoltar }) => {
             window.navigator.vibrate([200, 100, 200]);
           }
 
-          // Notificação de Sistema (Push)
           if (Notification.permission === 'granted') {
             new Notification('📦 Novo Pedido Havaianas!', {
               body: `${novoPedido.solicitante} enviou uma nova solicitação.`,
@@ -91,9 +82,7 @@ const TelaEstoquistaContent = ({ onVoltar }) => {
 
     return () => {
       clearInterval(healthInterval);
-      // Não desconectamos o socket aqui para manter a escuta ativa se o componente remontar
     };
-    // Deixamos o array de dependências limpo para a conexão ser estável
   }, [adicionarPedido, verificarBackend]);
 
   const concluirPedido = (pedido) => {
@@ -101,10 +90,7 @@ const TelaEstoquistaContent = ({ onVoltar }) => {
       status: 'concluido',
       horarioConclusao: new Date().toLocaleString()
     });
-    
-    // Avisa o servidor e o vendedor que está pronto
     socketService.confirmarPedidoConcluido(pedido.id, pedido.solicitante, 'Estoquista');
-    
     alert(`✅ Pedido #${pedido.id} concluído com sucesso!`);
   };
 
@@ -130,7 +116,6 @@ const TelaEstoquistaContent = ({ onVoltar }) => {
         {conectado ? '📡 Recebendo pedidos em tempo real' : '⚠️ Tentando conectar ao tempo real...'}
       </div>
 
-      {/* Alerta Popup */}
       {novaNotificacao && (
         <div className={`alerta-novo-pedido ${novaNotificacao.urgencia ? 'urgente' : ''}`}>
           <div className="alerta-conteudo">
@@ -151,12 +136,15 @@ const TelaEstoquistaContent = ({ onVoltar }) => {
 
       <div className="estoquista-header">
         <h1>📦 PAINEL DO ESTOQUE</h1>
+        <button className="btn-limpar-historico" onClick={limparPedidosLocal}>
+          🗑️ Limpar Meu Histórico
+        </button>
       </div>
 
       <div className="filtros">
-        <button className={filtro === 'todos' ? 'ativo' : ''} onClick={() => setFiltro('todos')}>Todos</button>
-        <button className={filtro === 'pendentes' ? 'ativo' : ''} onClick={() => setFiltro('pendentes')}>Pendentes</button>
-        <button className={filtro === 'concluidos' ? 'ativo' : ''} onClick={() => setFiltro('concluidos')}>Concluídos</button>
+        <button className={filtro === 'todos' ? 'active' : ''} onClick={() => setFiltro('todos')}>Todos</button>
+        <button className={filtro === 'pendentes' ? 'active' : ''} onClick={() => setFiltro('pendentes')}>Pendentes</button>
+        <button className={filtro === 'concluidos' ? 'active' : ''} onClick={() => setFiltro('concluidos')}>Concluídos</button>
       </div>
 
       <div className="pedidos-list">

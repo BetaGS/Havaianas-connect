@@ -1,17 +1,18 @@
 // src/components/TelaCaixa.jsx
-import React, { useState, useEffect } from 'react'; // Adicionado useEffect
+import React, { useState, useEffect } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { usePedidos } from '../../contexts/PedidosContext';
-import socketService from '../../services/socket'; // Adicionado import do socket
+import socketService from '../../services/socket';
 import './TelaCaixa.css';
 
 const TelaCaixa = ({ onVoltar, caixaNome }) => {
   const { darkMode, toggleDarkMode } = useTheme();
-  const { adicionarPedido, pedidos } = usePedidos();
+  // Importando limparPedidosLocal do PedidosContext
+  const { adicionarPedido, pedidos, limparPedidosLocal } = usePedidos();
   const [abaAtiva, setAbaAtiva] = useState('catalogo');
   const [busca, setBusca] = useState('');
   const [carrinho, setCarrinho] = useState([]);
-  const [conectado, setConectado] = useState(false); // Estado para feedback visual
+  const [conectado, setConectado] = useState(false);
 
   // --- CONFIGURAÇÃO DO TEMPO REAL ---
   useEffect(() => {
@@ -27,7 +28,6 @@ const TelaCaixa = ({ onVoltar, caixaNome }) => {
 
     conectarSocket();
 
-    // Desconecta ao sair da tela para evitar bugs
     return () => socketService.disconnect();
   }, [caixaNome]);
 
@@ -87,10 +87,9 @@ const TelaCaixa = ({ onVoltar, caixaNome }) => {
       return;
     }
 
-    // Criando o objeto padronizado para o servidor e estoquista
     const novoPedido = {
       id: Date.now(),
-      solicitante: caixaNome, // Estoquista usa esse campo
+      solicitante: caixaNome,
       tipo: 'caixa',
       itens: [...carrinho],
       urgencia: true,
@@ -98,10 +97,7 @@ const TelaCaixa = ({ onVoltar, caixaNome }) => {
       status: 'pendente'
     };
 
-    // 1. Salva no contexto local (para aparecer na sua aba "Meus Envios")
     adicionarPedido(novoPedido);
-
-    // 2. Envia via Socket para o Estoquista ver na hora
     const enviadoComSucesso = socketService.enviarPedido(novoPedido);
 
     if (enviadoComSucesso) {
@@ -120,7 +116,6 @@ const TelaCaixa = ({ onVoltar, caixaNome }) => {
       </button>
       <button className="btn-voltar" onClick={onVoltar}>← Voltar</button>
 
-      {/* Indicador de Conexão */}
       <div className={`status-conexao ${conectado ? 'conectado' : 'desconectado'}`}>
         <span className="status-dot"></span>
         {conectado ? '📡 Conectado ao Estoque' : '⚠️ Offline - Tentando reconectar...'}
@@ -209,7 +204,15 @@ const TelaCaixa = ({ onVoltar, caixaNome }) => {
         </div>
       ) : (
         <div className="meus-envios">
-          <h2 className="envios-titulo">📋 MEUS PEDIDOS URGENTES</h2>
+          <div className="envios-header-acoes">
+            <h2 className="envios-titulo">📋 MEUS PEDIDOS URGENTES</h2>
+            {meusPedidos.length > 0 && (
+              <button className="btn-limpar-historico" onClick={limparPedidosLocal}>
+                🗑️ Limpar Histórico
+              </button>
+            )}
+          </div>
+
           {meusPedidos.length === 0 ? (
             <div className="sem-pedidos"><p>📭 Você ainda não fez nenhum pedido urgente</p></div>
           ) : (
