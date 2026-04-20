@@ -1,21 +1,33 @@
 // src/services/pushNotification.js
 
-const PUBLIC_VAPID_KEY = 'SUA_CHAVE_PUBLICA_AQUI';
+// Substitua pela sua chave pública gerada pelo npx web-push
+const PUBLIC_VAPID_KEY = "BGJ6TON0nIcsUzfW7oD-mjyziRuEIz7WbRen612Ke6S7GmS_AbzZuQ8wKeIYNZsLUmzXNqfnQHWIyvRLKYDVhSM"; 
 
-export async function subscribeUserToPush() {
-  const registration = await navigator.serviceWorker.ready;
-  
-  // Verifica se já existe uma inscrição
-  let subscription = await registration.pushManager.getSubscription();
-  
-  if (!subscription) {
-    // Cria uma nova inscrição
-    subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: PUBLIC_VAPID_KEY
-    });
-    
-    // ENVIA PARA O BACKEND (Aquela rota /subscribe que criamos no server.js)
+// O 'export' antes de 'async function' é OBRIGATÓRIO
+export async function configurarNotificacoes() {
+  if (!('serviceWorker' in navigator)) {
+    console.log("Service Worker não suportado.");
+    return;
+  }
+
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
+      console.log("Permissão de notificação negada.");
+      return;
+    }
+
+    const registration = await navigator.serviceWorker.ready;
+    let subscription = await registration.pushManager.getSubscription();
+
+    if (!subscription) {
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: PUBLIC_VAPID_KEY
+      });
+    }
+
+    // Altere para a URL real do seu backend no Render
     await fetch('https://havaianas-backend.onrender.com/subscribe', {
       method: 'POST',
       body: JSON.stringify(subscription),
@@ -23,7 +35,9 @@ export async function subscribeUserToPush() {
         'Content-Type': 'application/json'
       }
     });
-    
-    console.log('📱 Dispositivo inscrito com sucesso!');
+
+    console.log("✅ Dispositivo inscrito para Push.");
+  } catch (error) {
+    console.error("❌ Erro ao configurar notificações:", error);
   }
 }
