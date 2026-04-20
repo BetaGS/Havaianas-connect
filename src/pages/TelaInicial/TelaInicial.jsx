@@ -1,15 +1,15 @@
-// src/components/TelaInicial.jsx
+// src/pages/TelaInicial/TelaInicial.jsx
 import React, { useEffect } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
+// O caminho correto deve subir dois níveis (../../) para sair de 'TelaInicial' e 'pages'
 import { configurarNotificacoes } from '../../services/pushNotification';
 import './TelaInicial.css';
 
 const TelaInicial = ({ onSelecionarLoja }) => {
   const { darkMode, toggleDarkMode } = useTheme();
 
-  // Tenta configurar as notificações assim que o app é aberto
   useEffect(() => {
-    // Essa função pede permissão e inscreve o celular no servidor do Render
+    // Tenta configurar as notificações assim que a tela inicial carrega
     configurarNotificacoes();
   }, []);
 
