@@ -1,24 +1,50 @@
 // public/sw.js
+self.addEventListener('push', function(event) {
+  console.log('Mensagem Push recebida!');
+  
+  let data = { title: 'Havaianas Connect', body: 'Novo pedido recebido!', url: '/' };
+  
+  try {
+    if (event.data) {
+      data = event.data.json();
+    }
+  } catch (e) {
+    console.error('Erro ao processar JSON do push', e);
+  }
+
+  const options = {
+    body: data.body,
+    icon: '/logo192.png',
+    badge: '/logo192.png',
+    vibrate: [200, 100, 200],
+    data: {
+      url: data.url || '/'
+    },
+    actions: [
+      { action: 'open', title: 'Ver Pedido' }
+    ]
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(data.title, options)
+  );
+});
 
 self.addEventListener('notificationclick', function(event) {
   event.notification.close();
-
-  // Define a URL de destino. Se não vier no push, vai para a raiz.
-  // IMPORTANTE: Use a URL completa do seu projeto no Render se necessário
-  const urlToOpen = new URL(event.notification.data?.url || '/', self.location.origin).href;
+  
+  const targetUrl = event.notification.data.url;
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(windowClients) {
-      // Se o app já estiver aberto em algum lugar, foca nele
       for (var i = 0; i < windowClients.length; i++) {
         var client = windowClients[i];
-        if (client.url === urlToOpen && 'focus' in client) {
+        if (client.url.includes(targetUrl) && 'focus' in client) {
           return client.focus();
         }
       }
-      // Se não estiver aberto, abre uma nova janela
       if (clients.openWindow) {
-        return clients.openWindow(urlToOpen);
+        return clients.openWindow(targetUrl);
       }
     })
   );
