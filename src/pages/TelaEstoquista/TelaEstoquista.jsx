@@ -1,5 +1,5 @@
 // src/components/TelaEstoquista.jsx
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { usePedidos } from '../../contexts/PedidosContext';
 import socketService from '../../services/socket';
@@ -15,64 +15,61 @@ const TelaEstoquistaContent = ({ onVoltar }) => {
   const [novaNotificacao, setNovaNotificacao] = useState(null);
   const [servidorStatus, setServidorStatus] = useState('checking');
   const [latency, setLatency] = useState(null);
-  const [usuariosOnline, setUsuariosOnline] = useState(0);
 
-  // Verificar saúde do backend
+  // Criamos uma referência para os pedidos. 
+  // Isso permite que o Socket veja a lista atualizada sem reiniciar o useEffect.
+  const pedidosRef = useRef(pedidos);
+  useEffect(() => {
+    pedidosRef.current = pedidos;
+  }, [pedidos]);
+
   const verificarBackend = useCallback(async () => {
     try {
       const health = await checkBackendHealth();
       if (health.online) {
         setServidorStatus('online');
-        setUsuariosOnline(health.data?.online || 0);
-        
         const test = await testConnection();
         setLatency(test.latency);
       } else {
         setServidorStatus('offline');
       }
     } catch (error) {
-      console.error('Erro ao verificar backend:', error);
       setServidorStatus('offline');
     }
   }, []);
 
   useEffect(() => {
-    // 1. Verificar backend periodicamente
     verificarBackend();
     const healthInterval = setInterval(verificarBackend, 30000);
 
-    // 2. Conectar ao servidor como estoquista
     const iniciarConexao = async () => {
       try {
+        // Conecta ao socket (O service já usa Polling primeiro para celulares)
         await socketService.connect('Estoquista', 'estoquista');
         setConectado(true);
 
-        // 3. Ouvir novos pedidos em tempo real
+        // Configura o que fazer quando um pedido chegar
         socketService.onPedidoRecebido((novoPedido) => {
-          console.log('📦 Novo pedido recebido via Socket!', novoPedido);
+          console.log('📦 Socket: Novo pedido detectado!', novoPedido);
 
-          // Segurança: Verifica se o pedido já não existe na lista para evitar duplicados
-          const jaExiste = pedidos.find(p => p.id === novoPedido.id);
+          // 1. Verifica se o pedido já existe para não duplicar na tela
+          const jaExiste = pedidosRef.current.find(p => p.id === novoPedido.id);
           if (jaExiste) return;
 
-          // Mostrar alerta visual na tela
-          setNovaNotificacao(novoPedido);
-          
-          // Adicionar ao estado global do Context (aparece na lista)
+          // 2. Adiciona ao estado global (faz o card aparecer na lista)
           adicionarPedido({
             ...novoPedido,
             status: 'pendente'
           });
+
+          // 3. Notificações Visuais e Sonoras
+          setNovaNotificacao(novoPedido);
+          new Audio('/notification.mp3').play().catch(() => {});
           
-          // Feedback Sonoro
-          const audio = new Audio('/notification.mp3');
-          audio.play().catch(e => console.log('Áudio bloqueado pelo navegador'));
-          
-          // Feedback Hático (Celular)
           if (window.navigator.vibrate) {
             window.navigator.vibrate([200, 100, 200]);
           }
-          
+
           // Notificação de Sistema (Push)
           if (Notification.permission === 'granted') {
             new Notification('📦 Novo Pedido Havaianas!', {
@@ -80,35 +77,24 @@ const TelaEstoquistaContent = ({ onVoltar }) => {
               icon: '/havaianas-icon.png'
             });
           }
-          
-          // Auto-fechar a notificação visual após 5s
-          setTimeout(() => setNovaNotificacao(null), 5000);
-        });
 
-        // Ouvir confirmação de envio
-        socketService.onPedidoEnviado((data) => {
-          console.log('📨 Status do Servidor:', data.mensagem);
+          setTimeout(() => setNovaNotificacao(null), 6000);
         });
-
-        // Pedir permissão de notificação se for a primeira vez
-        if (Notification.permission === 'default') {
-          Notification.requestPermission();
-        }
 
       } catch (error) {
-        console.error('Erro ao iniciar Socket:', error);
+        console.error('Erro na conexão do Estoquista:', error);
         setConectado(false);
       }
     };
-    
+
     iniciarConexao();
-    
+
     return () => {
-      socketService.disconnect();
       clearInterval(healthInterval);
+      // Não desconectamos o socket aqui para manter a escuta ativa se o componente remontar
     };
-    // Dependência de 'pedidos' para garantir que a verificação de duplicados funcione
-  }, [pedidos, adicionarPedido, verificarBackend]);
+    // Deixamos o array de dependências limpo para a conexão ser estável
+  }, [adicionarPedido, verificarBackend]);
 
   const concluirPedido = (pedido) => {
     atualizarPedido(pedido.id, {
@@ -116,13 +102,10 @@ const TelaEstoquistaContent = ({ onVoltar }) => {
       horarioConclusao: new Date().toLocaleString()
     });
     
-    // Notifica o backend/vendedor que o item saiu do estoque
+    // Avisa o servidor e o vendedor que está pronto
     socketService.confirmarPedidoConcluido(pedido.id, pedido.solicitante, 'Estoquista');
     
-    const audio = new Audio('/complete.mp3');
-    audio.play().catch(() => {});
-    
-    alert(`✅ Pedido #${pedido.id} finalizado!`);
+    alert(`✅ Pedido #${pedido.id} concluído com sucesso!`);
   };
 
   const pedidosFiltrados = pedidos.filter(p => {
@@ -131,34 +114,29 @@ const TelaEstoquistaContent = ({ onVoltar }) => {
     return true;
   });
 
-  const pedidosPendentes = pedidos.filter(p => p.status === 'pendente').length;
-  const pedidosUrgentes = pedidos.filter(p => p.urgencia === true && p.status === 'pendente').length;
-
   return (
     <div className={`estoquista-container ${darkMode ? 'dark-mode' : 'light-mode'}`}>
       
-      {/* Barra de Status do Backend */}
+      {/* Barra de Status */}
       <div className={`server-status ${servidorStatus}`}>
         <span className="status-dot"></span>
         <span className="status-text">
-          {servidorStatus === 'online' ? `🌐 Backend Online (${latency}ms)` : `⚠️ Backend Offline`}
+          {servidorStatus === 'online' ? `🌐 Servidor Online (${latency}ms)` : `⚠️ Servidor Offline`}
         </span>
-        {usuariosOnline > 0 && <span className="status-usuarios">{usuariosOnline} online</span>}
       </div>
 
-      {/* Indicador de Real-Time (Socket) */}
       <div className={`ws-status ${conectado ? 'conectado' : 'desconectado'}`}>
         <span className="status-indicador"></span>
-        {conectado ? '📡 Sincronizado em tempo real' : '⚠️ Sem conexão tempo real'}
+        {conectado ? '📡 Recebendo pedidos em tempo real' : '⚠️ Tentando conectar ao tempo real...'}
       </div>
 
-      {/* Alerta de Novo Pedido (Overlay) */}
+      {/* Alerta Popup */}
       {novaNotificacao && (
         <div className={`alerta-novo-pedido ${novaNotificacao.urgencia ? 'urgente' : ''}`}>
           <div className="alerta-conteudo">
             <span className="alerta-icone">🔔</span>
             <div>
-              <strong>NOVO PEDIDO RECEBIDO!</strong>
+              <strong>PEDIDO RECEBIDO!</strong>
               <p>{novaNotificacao.solicitante} • {novaNotificacao.itens?.length || 0} itens</p>
             </div>
           </div>
@@ -172,23 +150,7 @@ const TelaEstoquistaContent = ({ onVoltar }) => {
       </div>
 
       <div className="estoquista-header">
-        <h1>📦 PAINEL DE ESTOQUE</h1>
-        <p>Os pedidos aparecem aqui automaticamente</p>
-      </div>
-
-      <div className="stats-cards">
-        <div className="stat-card">
-          <span className="stat-icon">📊</span>
-          <div><h3>{pedidos.length}</h3><p>Total</p></div>
-        </div>
-        <div className="stat-card pendente">
-          <span className="stat-icon">⏳</span>
-          <div><h3>{pedidosPendentes}</h3><p>Pendentes</p></div>
-        </div>
-        <div className="stat-card urgente">
-          <span className="stat-icon">🚨</span>
-          <div><h3>{pedidosUrgentes}</h3><p>Urgentes</p></div>
-        </div>
+        <h1>📦 PAINEL DO ESTOQUE</h1>
       </div>
 
       <div className="filtros">
@@ -199,32 +161,25 @@ const TelaEstoquistaContent = ({ onVoltar }) => {
 
       <div className="pedidos-list">
         {pedidosFiltrados.length === 0 ? (
-          <div className="sem-pedidos">
-            <p>📭 Nenhum pedido por aqui...</p>
-          </div>
+          <div className="sem-pedidos">📭 Nenhum pedido por enquanto...</div>
         ) : (
           pedidosFiltrados.sort((a, b) => b.id - a.id).map(pedido => (
             <div key={pedido.id} className={`pedido-card ${pedido.status} ${pedido.urgencia ? 'urgente' : ''}`}>
               <div className="pedido-header">
                 <span className="pedido-id">#{pedido.id}</span>
-                <span className={`pedido-status ${pedido.status}`}>
-                  {pedido.status === 'pendente' ? '⏳ Pendente' : '✅ Concluido'}
-                </span>
+                <span className={`status-tag ${pedido.status}`}>{pedido.status}</span>
               </div>
-              
               <div className="pedido-corpo">
-                <p><strong>Solicitante:</strong> {pedido.solicitante} <span className="badge-tipo">{pedido.tipo}</span></p>
-                <p><strong>Horário:</strong> {pedido.horarioPedido}</p>
-                
-                <div className="pedido-itens">
+                <p><strong>Solicitante:</strong> {pedido.solicitante}</p>
+                <p><strong>Hora:</strong> {pedido.horarioPedido}</p>
+                <div className="itens-badge-container">
                   {pedido.itens?.map((item, idx) => (
-                    <div key={idx} className="item-linha">
+                    <div key={idx} className="item-badge">
                       {item.nome} - Tam {item.tamanho} (x{item.quantidade})
                     </div>
                   ))}
                 </div>
               </div>
-
               {pedido.status === 'pendente' && (
                 <button className="btn-concluir" onClick={() => concluirPedido(pedido)}>
                   CONCLUIR ENTREGA
