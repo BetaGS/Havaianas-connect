@@ -1,0 +1,223 @@
+/* src/pages/Cadastro/Cadastro.css */
+.cadastro-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  padding: 20px;
+  font-family: 'Montserrat', 'Segoe UI', system-ui, sans-serif;
+}
+
+.cadastro-card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 30px;
+  padding: 40px;
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  animation: fadeInUp 0.5s ease;
+}
+
+.cadastro-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.cadastro-logo {
+  font-size: 4rem;
+  margin-bottom: 10px;
+  animation: bounce 1s ease infinite;
+}
+
+.cadastro-header h1 {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: white;
+  margin-bottom: 5px;
+  letter-spacing: 2px;
+}
+
+.cadastro-header p {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+}
+
+.cadastro-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.input-group label {
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.input-icon {
+  font-size: 1rem;
+}
+
+.input-group input,
+.input-group select {
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+  font-size: 1rem;
+  color: white;
+  font-family: inherit;
+  transition: all 0.3s;
+}
+
+.input-group select option {
+  background: #b91c1c;
+  color: white;
+}
+
+.input-group input:focus,
+.input-group select:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.input-group input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.funcao-options {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 5px;
+}
+
+.funcao-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s;
+  color: white;
+  font-weight: 600;
+}
+
+.funcao-option:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.funcao-option.selected {
+  background: linear-gradient(135deg, #ff9800, #ff5722);
+  border-color: transparent;
+  box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
+}
+
+.funcao-emoji {
+  font-size: 1.2rem;
+}
+
+.btn-cadastrar {
+  background: linear-gradient(135deg, #ff9800, #ff5722);
+  color: white;
+  border: none;
+  padding: 14px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-family: inherit;
+  margin-top: 10px;
+}
+
+.btn-cadastrar:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(255, 152, 0, 0.4);
+}
+
+.cadastro-footer {
+  text-align: center;
+  margin-top: 20px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.cadastro-footer a {
+  color: #ff9800;
+  text-decoration: none;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cadastro-footer a:hover {
+  text-decoration: underline;
+}
+
+.erro-mensagem {
+  background: rgba(244, 67, 54, 0.9);
+  color: white;
+  padding: 10px 15px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  text-align: center;
+  animation: shakeError 0.3s ease;
+}
+
+.sucesso-mensagem {
+  background: rgba(76, 175, 80, 0.9);
+  color: white;
+  padding: 10px 15px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  text-align: center;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsivo */
+@media (max-width: 560px) {
+  .cadastro-card {
+    padding: 30px 20px;
+  }
+  
+  .cadastro-header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .funcao-options {
+    grid-template-columns: 1fr;
+  }
+  
+  .input-group input,
+  .input-group select {
+    padding: 12px 14px;
+  }
+}
