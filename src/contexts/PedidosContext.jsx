@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 const PedidosContext = createContext();
 
@@ -27,20 +27,18 @@ export const PedidosProvider = ({ children }) => {
     localStorage.setItem('havaianas_pedidos', JSON.stringify(pedidos));
   }, [pedidos]);
 
-  // Função para adicionar novo pedido
-  const adicionarPedido = (dadosPedido) => {
-    // Se o pedido já tiver um ID (veio via Socket), usamos ele.
-    // Se não tiver (criado localmente), geramos um novo.
+  // Função para adicionar novo pedido (envolta em useCallback para ser usada no listener)
+  const adicionarPedido = useCallback((dadosPedido) => {
     const pedidoCompleto = {
       id: dadosPedido.id || Date.now(),
       horarioPedido: dadosPedido.horarioPedido || new Date().toLocaleString(),
       status: dadosPedido.status || 'pendente',
       horarioConclusao: dadosPedido.horarioConclusao || null,
-      ...dadosPedido, // Espalha o restante dos dados (itens, solicitante, urgencia)
+      ...dadosPedido,
     };
 
     setPedidos(prev => {
-      // Evita duplicados (importante para o Socket não inserir o mesmo pedido duas vezes)
+      // Evita duplicados (essencial para não repetir pedidos vindos de Socket + Push)
       const jaExiste = prev.find(p => p.id === pedidoCompleto.id);
       if (jaExiste) return prev;
       
@@ -48,7 +46,26 @@ export const PedidosProvider = ({ children }) => {
     });
 
     return pedidoCompleto;
-  };
+  }, []);
+
+  // --- LÓGICA PARA RECEBER PEDIDOS DO SERVICE WORKER (PUSH) ---
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      const handleServiceWorkerMessage = (event) => {
+        // Verifica se a mensagem é do tipo que definimos no sw.js
+        if (event.data && event.data.type === 'NOVO_PEDIDO_PUSH') {
+          console.log("Contexto recebeu pedido via Push:", event.data.pedido);
+          adicionarPedido(event.data.pedido);
+        }
+      };
+
+      navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage);
+      
+      return () => {
+        navigator.serviceWorker.removeEventListener('message', handleServiceWorkerMessage);
+      };
+    }
+  }, [adicionarPedido]);
 
   // Função para atualizar pedido (concluir)
   const atualizarPedido = (pedidoId, atualizacao) => {
@@ -62,7 +79,7 @@ export const PedidosProvider = ({ children }) => {
     setPedidos(prev => prev.filter(pedido => pedido.id !== pedidoId));
   };
 
-  // Função para limpar APENAS neste aparelho (o que você pediu)
+  // Função para limpar APENAS neste aparelho
   const limparPedidosLocal = () => {
     if (window.confirm("Isso apagará o histórico apenas deste aparelho. Continuar?")) {
       setPedidos([]);
@@ -76,7 +93,7 @@ export const PedidosProvider = ({ children }) => {
       adicionarPedido,
       atualizarPedido,
       deletarPedido,
-      limparPedidosLocal // Nome alterado para ficar claro que é local
+      limparPedidosLocal
     }}>
       {children}
     </PedidosContext.Provider>
