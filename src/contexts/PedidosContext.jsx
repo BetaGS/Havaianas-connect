@@ -11,7 +11,7 @@ export const usePedidos = () => {
 };
 
 export const PedidosProvider = ({ children }) => {
-  // Carregar pedidos do localStorage ao iniciar
+  // 1. Estado inicial carregado do LocalStorage
   const [pedidos, setPedidos] = useState(() => {
     try {
       const savedPedidos = localStorage.getItem('havaianas_pedidos');
@@ -22,64 +22,73 @@ export const PedidosProvider = ({ children }) => {
     }
   });
 
-  // Salvar pedidos no localStorage sempre que mudar
+  // 2. Persistência automática
   useEffect(() => {
     localStorage.setItem('havaianas_pedidos', JSON.stringify(pedidos));
   }, [pedidos]);
 
-  // Função para adicionar novo pedido (envolta em useCallback para ser usada no listener)
+  // 3. Função de Adição com Proteção contra Duplicados
   const adicionarPedido = useCallback((dadosPedido) => {
-    const pedidoCompleto = {
-      id: dadosPedido.id || Date.now(),
-      horarioPedido: dadosPedido.horarioPedido || new Date().toLocaleString(),
-      status: dadosPedido.status || 'pendente',
-      horarioConclusao: dadosPedido.horarioConclusao || null,
-      ...dadosPedido,
-    };
+    if (!dadosPedido) return;
 
     setPedidos(prev => {
-      // Evita duplicados (essencial para não repetir pedidos vindos de Socket + Push)
-      const jaExiste = prev.find(p => p.id === pedidoCompleto.id);
-      if (jaExiste) return prev;
+      // Verificação rigorosa de ID para não duplicar Push com Socket
+      const idNovo = dadosPedido.id || Date.now();
+      const jaExiste = prev.some(p => String(p.id) === String(idNovo));
       
+      if (jaExiste) return prev;
+
+      const pedidoCompleto = {
+        id: idNovo,
+        horarioPedido: dadosPedido.horarioPedido || new Date().toLocaleString(),
+        status: dadosPedido.status || 'pendente',
+        horarioConclusao: dadosPedido.horarioConclusao || null,
+        ...dadosPedido,
+      };
+
       return [pedidoCompleto, ...prev];
     });
-
-    return pedidoCompleto;
   }, []);
 
-  // --- LÓGICA PARA RECEBER PEDIDOS DO SERVICE WORKER (PUSH) ---
+  // 4. Ouvinte do Service Worker (Sincronização Push -> UI)
   useEffect(() => {
     if ('serviceWorker' in navigator) {
       const handleServiceWorkerMessage = (event) => {
-        // Verifica se a mensagem é do tipo que definimos no sw.js
-        if (event.data && event.data.type === 'NOVO_PEDIDO_PUSH') {
-          console.log("Contexto recebeu pedido via Push:", event.data.pedido);
+        // Log para debug no console do celular (inspecione via Chrome DevTools se possível)
+        console.log("Mensagem recebida do SW:", event.data);
+
+        if (event.data && event.data.type === 'NOVO_PEDIDO_PUSH' && event.data.pedido) {
           adicionarPedido(event.data.pedido);
         }
       };
 
+      // Escuta mensagens do Service Worker
       navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage);
       
+      // Solicita que o SW mande mensagens pendentes caso o App tenha acabado de abrir
+      navigator.serviceWorker.ready.then(registration => {
+        if (registration.active) {
+          registration.active.postMessage({ type: 'GET_PENDING_PEDIDOS' });
+        }
+      });
+
       return () => {
         navigator.serviceWorker.removeEventListener('message', handleServiceWorkerMessage);
       };
     }
   }, [adicionarPedido]);
 
-  // Função para atualizar pedido (concluir)
+  // 5. Funções de Gerenciamento
   const atualizarPedido = (pedidoId, atualizacao) => {
     setPedidos(prev => prev.map(pedido =>
       pedido.id === pedidoId ? { ...pedido, ...atualizacao } : pedido
     ));
   };
 
-  // Função para deletar um pedido específico
   const deletarPedido = (pedidoId) => {
     setPedidos(prev => prev.filter(pedido => pedido.id !== pedidoId));
   };
 
-  // Função para limpar APENAS neste aparelho
   const limparPedidosLocal = () => {
     if (window.confirm("Isso apagará o histórico apenas deste aparelho. Continuar?")) {
       setPedidos([]);
