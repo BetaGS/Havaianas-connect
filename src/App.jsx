@@ -4,17 +4,24 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { PedidosProvider } from './contexts/PedidosContext';
 
-// Importações de Páginas
 import Login from './pages/Login/Login';
 import Cadastro from './pages/Cadastro/Cadastro';
-import TelaInicial from './pages/TelaInicial/TelaInicial'; // Esta será a tela do Vendedor
+import TelaInicial from './pages/TelaInicial/TelaInicial';
 import TelaEstoquista from './pages/TelaEstoquista/TelaEstoquista';
 
 const ProtectedRoute = ({ children, funcoesPermitidas = [] }) => {
   const { user, loading } = useAuth();
 
-  if (loading) return <div style={{ textAlign: 'center', padding: '50px' }}>Carregando...</div>;
-  if (!user) return <Navigate to="/login" replace />;
+  // 1. IMPORTANTE: Se está carregando, não redireciona! 
+  // Isso evita o loop inicial.
+  if (loading) {
+    return <div style={{ display: 'flex', justifyContent: 'center', marginTop: '50px' }}>Autenticando...</div>;
+  }
+
+  // 2. Se terminou de carregar e não tem usuário, aí sim vai para o login
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
 
   const cargo = user.cargo || user.funcao;
   if (funcoesPermitidas.length > 0 && !funcoesPermitidas.includes(cargo)) {
@@ -25,36 +32,28 @@ const ProtectedRoute = ({ children, funcoesPermitidas = [] }) => {
 };
 
 function AppContent() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+
+  if (loading) return null; // Evita renderizar rotas antes de saber quem é o usuário
 
   return (
     <Routes>
-      <Route path="/login" element={!user ? <Login /> : <Navigate to="/" />} />
-      <Route path="/cadastro" element={!user ? <Cadastro /> : <Navigate to="/" />} />
+      {/* Se já estiver logado, não deixa entrar na tela de login/cadastro */}
+      <Route path="/login" element={!user ? <Login /> : <Navigate to="/" replace />} />
+      <Route path="/cadastro" element={!user ? <Cadastro /> : <Navigate to="/" replace />} />
 
-      {/* Rota Raiz: Ela não tem tela, ela apenas REDIRECIONA conforme a função */}
       <Route path="/" element={
         <ProtectedRoute>
+          {/* Lógica de Redirecionamento Direto */}
           {(user?.cargo === 'estoquista' || user?.funcao === 'estoquista') 
             ? <Navigate to="/estoque" replace /> 
             : <Navigate to="/vendedor" replace />}
         </ProtectedRoute>
       } />
 
-      {/* Tela exclusiva do Vendedor */}
-      <Route path="/vendedor" element={
-        <ProtectedRoute>
-          <TelaInicial />
-        </ProtectedRoute>
-      } />
-
-      {/* Tela exclusiva do Estoquista */}
-      <Route path="/estoque" element={
-        <ProtectedRoute funcoesPermitidas={['estoquista']}>
-          <TelaEstoquista />
-        </ProtectedRoute>
-      } />
-
+      <Route path="/vendedor" element={<ProtectedRoute><TelaInicial /></ProtectedRoute>} />
+      <Route path="/estoque" element={<ProtectedRoute funcoesPermitidas={['estoquista']}><TelaEstoquista /></ProtectedRoute>} />
+      
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
