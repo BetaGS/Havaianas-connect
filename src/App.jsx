@@ -28,3 +28,5 @@
 
   {/* ... outras rotas como /loja-45 ... */}
 </Routes>
+
+export default App;
