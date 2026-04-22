@@ -42,7 +42,7 @@ function AppContent() {
     <Routes>
       {/* Rotas Públicas */}
       <Route path="/login" element={!usuario ? <Login /> : <Navigate to="/" />} />
-      <Route path="/cadastro" element={!usuario ? <Cadastro /> : <Navigate to="/" />} />
+      <Route path="/cadastro" element={<Cadastro />} />
 
       {/* Rota Raiz: Se for estoquista, manda pro estoque. Se não, manda pra seleção de loja */}
       <Route path="/" element={
