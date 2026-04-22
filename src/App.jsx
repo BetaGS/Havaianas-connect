@@ -1,69 +1,91 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider } from './contexts/ThemeContext';
-import { PedidosProvider } from './contexts/PedidosContext';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+// src/contexts/AuthContext.jsx
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
-// Importações de Páginas
-import Login from './pages/Login/Login';
-import Cadastro from './pages/Cadastro/Cadastro';
-import TelaInicial from './pages/TelaInicial/TelaInicial';
-import LojaShopping45 from './pages/LojaShopping45/LojaShopping45';
-import TelaEstoquista from './pages/TelaEstoquista/TelaEstoquista';
+const AuthContext = createContext();
 
-const ProtectedRoute = ({ children, funcoesPermitidas = [] }) => {
-  const { user, loading } = useAuth();
-  if (loading) return <div style={{textAlign: 'center', padding: '20px'}}>Carregando...</div>;
-  if (!user) return <Navigate to="/login" replace />;
-  
-  const cargo = user.cargo || user.funcao;
-  if (funcoesPermitidas.length > 0 && !funcoesPermitidas.includes(cargo)) {
-    return <Navigate to="/" replace />;
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth deve ser usado dentro de um AuthProvider');
   }
-  return children;
+  return context;
 };
 
-function AppContent() {
-  const { user } = useAuth();
+export const AuthProvider = ({ children }) => {
+  // Mudamos para 'user' para bater com o que escrevemos no App.jsx
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const usuarioSalvo = localStorage.getItem('havaianas_usuario');
+    if (usuarioSalvo) {
+      setUser(JSON.parse(usuarioSalvo));
+    }
+    setLoading(false);
+  }, []);
+
+  // Cadastrar
+  const cadastrar = async (dados) => {
+    // Simulando banco local, mas garantindo que o campo seja 'cargo'
+    const usuarios = JSON.parse(localStorage.getItem('havaianas_usuarios') || '[]');
+    
+    if (usuarios.find(u => u.email === dados.email)) {
+      throw new Error('E-mail já cadastrado!');
+    }
+    
+    const novoUsuario = {
+      id: Date.now(),
+      nome: dados.nome,
+      email: dados.email,
+      senha: dados.senha,
+      cargo: dados.funcao, // Transformamos funcao em cargo aqui para o App.jsx entender
+      dataCadastro: new Date().toLocaleString()
+    };
+    
+    usuarios.push(novoUsuario);
+    localStorage.setItem('havaianas_usuarios', JSON.stringify(usuarios));
+    
+    const { senha, ...usuarioSemSenha } = novoUsuario;
+    setUser(usuarioSemSenha);
+    localStorage.setItem('havaianas_usuario', JSON.stringify(usuarioSemSenha));
+    
+    return usuarioSemSenha;
+  };
+
+  // Login
+  const login = async (email, senha) => {
+    const usuarios = JSON.parse(localStorage.getItem('havaianas_usuarios') || '[]');
+    const usuarioEncontrado = usuarios.find(u => u.email === email && u.senha === senha);
+    
+    if (!usuarioEncontrado) {
+      throw new Error('E-mail ou senha incorretos!');
+    }
+    
+    // IMPORTANTE: Garantimos que o objeto tenha 'user' e 'cargo'
+    const { senha: _, ...usuarioSemSenha } = usuarioEncontrado;
+    
+    setUser(usuarioSemSenha);
+    localStorage.setItem('havaianas_usuario', JSON.stringify(usuarioSemSenha));
+    
+    return usuarioSemSenha; 
+  };
+
+  const logout = () => {
+    setUser(null);
+    localStorage.removeItem('havaianas_usuario');
+    window.location.href = '/login';
+  };
+
   return (
-    <Routes>
-      <Route path="/login" element={!user ? <Login /> : <Navigate to="/" />} />
-      <Route path="/cadastro" element={!user ? <Cadastro /> : <Navigate to="/" />} />
-
-      <Route path="/" element={
-        <ProtectedRoute>
-          {(user?.cargo === 'estoquista' || user?.funcao === 'estoquista') 
-            ? <Navigate to="/estoque" replace /> 
-            : <Navigate to="/vendedor" replace />}
-        </ProtectedRoute>
-      } />
-
-      <Route path="/vendedor" element={<ProtectedRoute><TelaInicial /></ProtectedRoute>} />
-      
-      <Route path="/estoque" element={
-        <ProtectedRoute funcoesPermitidas={['estoquista']}>
-          <TelaEstoquista />
-        </ProtectedRoute>
-      } />
-
-      <Route path="/loja-45" element={<ProtectedRoute><LojaShopping45 /></ProtectedRoute>} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <AuthContext.Provider value={{
+      user,      // Antes era 'usuario', agora é 'user'
+      loading,   // Antes era 'carregando'
+      cadastrar,
+      login,
+      logout,
+      authenticated: !!user
+    }}>
+      {children}
+    </AuthContext.Provider>
   );
-}
-
-function App() {
-  return (
-    <Router>
-      <AuthProvider>
-        <ThemeProvider>
-          <PedidosProvider>
-            <AppContent />
-          </PedidosProvider>
-        </ThemeProvider>
-      </AuthProvider>
-    </Router>
-  );
-}
-
-export default App;
+};
