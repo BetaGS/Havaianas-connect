@@ -18,26 +18,26 @@ const Login = ({ onLogin }) => {
     setErro('');
 
     try {
-      // 1. Realiza o login chamando a API pelo AuthContext
+      // 1. Realiza o login. O AuthContext agora salva 'user' ou 'usuario'
       const usuario = await login(email, senha);
       
-      // LOG DE DEBUG: Abra o console (F12) para ver se os dados chegaram
-      console.log("Dados do usuário recebidos:", usuario);
+      console.log("Login realizado com sucesso. Dados:", usuario);
 
       if (onLogin) {
         onLogin(usuario);
       }
 
-      // 2. REDIRECIONAMENTO POR CARGO
-      // Verificamos 'cargo' ou 'funcao' para evitar erros de nomes vindo do banco
+      // 2. REDIRECIONAMENTO DIRETO POR FUNÇÃO
+      // Buscamos o cargo nos dois formatos possíveis para não dar erro
       const cargoDoUsuario = usuario?.cargo || usuario?.funcao;
 
       if (cargoDoUsuario === 'estoquista') {
-        console.log("Redirecionando para Estoque...");
+        console.log("Usuário identificado como Estoquista. Redirecionando...");
         navigate('/estoque');
       } else {
-        // Como você é vendedor, o navigate deve te levar para a rota definida no App.js
-        console.log("Redirecionando para área do Vendedor...");
+        // Se for vendedor (ou qualquer outra função), vai direto para a tela de vendas
+        // Ignora a tela de seleção de lojas antiga
+        console.log("Usuário identificado como Vendedor. Redirecionando...");
         navigate('/vendedor'); 
       }
 
@@ -55,7 +55,7 @@ const Login = ({ onLogin }) => {
         <div className="login-header">
           <div className="login-logo">👡</div>
           <h1>HAVAIANAS CONNECT</h1>
-          <p>Faça login para continuar</p>
+          <p>Acesse seu painel de trabalho</p>
         </div>
 
         <form onSubmit={handleSubmit} className="login-form">
@@ -92,13 +92,13 @@ const Login = ({ onLogin }) => {
           </div>
 
           <button type="submit" className="btn-login" disabled={carregando}>
-            {carregando ? '⏳ Entrando...' : '🚀 ENTRAR'}
+            {carregando ? '⏳ Verificando...' : '🚀 ENTRAR NO SISTEMA'}
           </button>
         </form>
 
         <div className="login-footer">
           <p>
-            Não tem uma conta? <Link to="/cadastro" className="link-cadastro">Cadastre-se</Link>
+            Novo por aqui? <Link to="/cadastro" className="link-cadastro">Solicitar acesso</Link>
           </p>
         </div>
       </div>
