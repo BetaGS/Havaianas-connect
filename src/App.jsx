@@ -1,3 +1,4 @@
+// src/App.jsx
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -9,52 +10,40 @@ import Cadastro from './pages/Cadastro/Cadastro';
 import TelaInicial from './pages/TelaInicial/TelaInicial';
 import TelaEstoquista from './pages/TelaEstoquista/TelaEstoquista';
 
-const ProtectedRoute = ({ children, funcoesPermitidas = [] }) => {
-  const { user, loading } = useAuth();
-
-  // 1. IMPORTANTE: Se está carregando, não redireciona! 
-  // Isso evita o loop inicial.
-  if (loading) {
-    return <div style={{ display: 'flex', justifyContent: 'center', marginTop: '50px' }}>Autenticando...</div>;
-  }
-
-  // 2. Se terminou de carregar e não tem usuário, aí sim vai para o login
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-
-  const cargo = user.cargo || user.funcao;
-  if (funcoesPermitidas.length > 0 && !funcoesPermitidas.includes(cargo)) {
-    return <Navigate to="/" replace />;
-  }
-
-  return children;
-};
-
 function AppContent() {
   const { user, loading } = useAuth();
 
-  if (loading) return null; // Evita renderizar rotas antes de saber quem é o usuário
+  // Bloqueio total enquanto carrega o localStorage
+  if (loading) return null;
 
   return (
     <Routes>
-      {/* Se já estiver logado, não deixa entrar na tela de login/cadastro */}
-      <Route path="/login" element={!user ? <Login /> : <Navigate to="/" replace />} />
-      <Route path="/cadastro" element={!user ? <Cadastro /> : <Navigate to="/" replace />} />
-
-      <Route path="/" element={
-        <ProtectedRoute>
-          {/* Lógica de Redirecionamento Direto */}
-          {(user?.cargo === 'estoquista' || user?.funcao === 'estoquista') 
-            ? <Navigate to="/estoque" replace /> 
-            : <Navigate to="/vendedor" replace />}
-        </ProtectedRoute>
-      } />
-
-      <Route path="/vendedor" element={<ProtectedRoute><TelaInicial /></ProtectedRoute>} />
-      <Route path="/estoque" element={<ProtectedRoute funcoesPermitidas={['estoquista']}><TelaEstoquista /></ProtectedRoute>} />
-      
-      <Route path="*" element={<Navigate to="/" replace />} />
+      {/* Se não está logado, só acessa Login e Cadastro */}
+      {!user ? (
+        <>
+          <Route path="/login" element={<Login />} />
+          <Route path="/cadastro" element={<Cadastro />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </>
+      ) : (
+        /* Se ESTÁ logado, define as rotas protegidas */
+        <>
+          <Route path="/" element={
+            (user.cargo === 'estoquista' || user.funcao === 'estoquista') 
+              ? <Navigate to="/estoque" replace /> 
+              : <Navigate to="/vendedor" replace />
+          } />
+          
+          <Route path="/vendedor" element={<TelaInicial />} />
+          <Route path="/estoque" element={
+            (user.cargo === 'estoquista' || user.funcao === 'estoquista') 
+              ? <TelaEstoquista /> 
+              : <Navigate to="/vendedor" replace />
+          } />
+          
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </>
+      )}
     </Routes>
   );
 }

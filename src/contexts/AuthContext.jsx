@@ -3,95 +3,54 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext();
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within a AuthProvider');
-  }
-  return context;
-};
-
 export const AuthProvider = ({ children }) => {
-  const [usuario, setUsuario] = useState(null);
-  const [carregando, setCarregando] = useState(true);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Carregar usuário do localStorage ao iniciar
   useEffect(() => {
-    const usuarioSalvo = localStorage.getItem('havaianas_usuario');
-    if (usuarioSalvo) {
-      setUsuario(JSON.parse(usuarioSalvo));
+    // 1. Tenta recuperar o usuário salvo
+    const savedUser = localStorage.getItem('havaianas_usuario');
+    
+    if (savedUser && savedUser !== "undefined") {
+      try {
+        setUser(JSON.parse(savedUser));
+      } catch (e) {
+        console.error("Erro ao ler localStorage", e);
+        localStorage.removeItem('havaianas_usuario');
+      }
     }
-    setCarregando(false);
+    
+    // 2. AQUI ESTÁ O SEGREDO: O loading PRECISA virar false
+    // para o App sair do estado de espera.
+    setLoading(false);
   }, []);
 
-  // Cadastrar novo usuário
-  const cadastrar = (dados) => {
-    // Buscar usuários existentes
-    const usuarios = JSON.parse(localStorage.getItem('havaianas_usuarios') || '[]');
-    
-    // Verificar se email já existe
-    if (usuarios.find(u => u.email === dados.email)) {
-      throw new Error('E-mail já cadastrado!');
-    }
-    
-    // Criar novo usuário
-    const novoUsuario = {
-      id: Date.now(),
-      nome: dados.nome,
-      email: dados.email,
-      senha: dados.senha,
-      funcao: dados.funcao,
-      dataCadastro: new Date().toLocaleString()
-    };
-    
-    usuarios.push(novoUsuario);
-    localStorage.setItem('havaianas_usuarios', JSON.stringify(usuarios));
-    
-    // Logar automaticamente
-    const { senha, ...usuarioSemSenha } = novoUsuario;
-    setUsuario(usuarioSemSenha);
-    localStorage.setItem('havaianas_usuario', JSON.stringify(usuarioSemSenha));
-    
-    return usuarioSemSenha;
-  };
-
-  // Login
   const login = (email, senha) => {
     const usuarios = JSON.parse(localStorage.getItem('havaianas_usuarios') || '[]');
     const usuarioEncontrado = usuarios.find(u => u.email === email && u.senha === senha);
     
-    if (!usuarioEncontrado) {
-      throw new Error('E-mail ou senha incorretos!');
-    }
+    if (!usuarioEncontrado) throw new Error('E-mail ou senha incorretos!');
     
     const { senha: _, ...usuarioSemSenha } = usuarioEncontrado;
-    setUsuario(usuarioSemSenha);
-    localStorage.setItem('havaianas_usuario', JSON.stringify(usuarioSemSenha));
     
-    return usuarioSemSenha;
+    // Garantimos que o campo 'cargo' existe (baseado no que você escolheu no cadastro)
+    const finalUser = { ...usuarioSemSenha, cargo: usuarioSemSenha.cargo || usuarioSemSenha.funcao };
+    
+    setUser(finalUser);
+    localStorage.setItem('havaianas_usuario', JSON.stringify(finalUser));
+    return finalUser;
   };
 
-  // Logout
   const logout = () => {
-    setUsuario(null);
+    setUser(null);
     localStorage.removeItem('havaianas_usuario');
   };
 
-  // Verificar se está logado
-  const isAuthenticated = () => {
-    return usuario !== null;
-  };
-
   return (
-    <AuthContext.Provider value={{
-      usuario,
-      carregando,
-      cadastrar,
-      login,
-      logout,
-      isAuthenticated
-    }}>
+    <AuthContext.Provider value={{ user, login, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );
 };
+
+export const useAuth = () => useContext(AuthContext);
