@@ -9,9 +9,8 @@ import Login from './pages/Login/Login';
 import Cadastro from './pages/Cadastro/Cadastro';
 import TelaInicial from './pages/TelaInicial/TelaInicial';
 import LojaShopping45 from './pages/LojaShopping45/LojaShopping45';
-import TelaEstoquista from './pages/TelaEstoquista/TelaEstoquista'; // Verifique o caminho correto
+import TelaEstoquista from './pages/TelaEstoquista/TelaEstoquista';
 
-// Componente de Rotas Protegidas (Blindado contra Not Found)
 const ProtectedRoute = ({ children, funcoesPermitidas = [] }) => {
   const { usuario, carregando } = useAuth();
 
@@ -27,8 +26,8 @@ const ProtectedRoute = ({ children, funcoesPermitidas = [] }) => {
     return <Navigate to="/login" replace />;
   }
 
-  // Verifica se o cargo/função do usuário bate com o permitido para a tela
-  if (funcoesPermitidas.length > 0 && !funcoesPermitidas.includes(usuario.funcao || usuario.cargo)) {
+  const cargoUser = usuario.funcao || usuario.cargo;
+  if (funcoesPermitidas.length > 0 && !funcoesPermitidas.includes(cargoUser)) {
     return <Navigate to="/" replace />;
   }
 
@@ -40,34 +39,32 @@ function AppContent() {
 
   return (
     <Routes>
-      {/* Rotas Públicas */}
       <Route path="/login" element={!usuario ? <Login /> : <Navigate to="/" />} />
-      <Route path="/cadastro" element={<Cadastro />} />
+      <Route path="/cadastro" element={!usuario ? <Cadastro /> : <Navigate to="/" />} />
 
-      {/* Rota Raiz: Se for estoquista, manda pro estoque. Se não, manda pra seleção de loja */}
+      {/* Rota Principal */}
       <Route path="/" element={
         <ProtectedRoute>
+          {/* Redirecionamento automático baseado no cargo */}
           {usuario?.funcao === 'estoquista' || usuario?.cargo === 'estoquista' 
             ? <Navigate to="/estoque" replace /> 
             : <TelaInicial />}
         </ProtectedRoute>
       } />
 
-      {/* Rota do Estoque: Protegida apenas para estoquistas */}
       <Route path="/estoque" element={
         <ProtectedRoute funcoesPermitidas={['estoquista']}>
           <TelaEstoquista />
         </ProtectedRoute>
       } />
 
-      {/* Rota de Loja Específica */}
+      {/* Rota da Loja 45 */}
       <Route path="/loja-45" element={
         <ProtectedRoute>
           <LojaShopping45 />
         </ProtectedRoute>
       } />
 
-      {/* Fallback: Se digitar qualquer coisa errada, volta pro lugar seguro */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
