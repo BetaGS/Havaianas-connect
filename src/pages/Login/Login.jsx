@@ -1,12 +1,12 @@
 // src/pages/Login/Login.jsx
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { Link, useNavigate } from 'react-router-dom'; // Importações necessárias para navegação interna
+import { Link, useNavigate } from 'react-router-dom'; 
 import './Login.css';
 
 const Login = ({ onLogin }) => {
   const { login } = useAuth();
-  const navigate = useNavigate(); // Hook para redirecionar via código
+  const navigate = useNavigate(); 
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [erro, setErro] = useState('');
@@ -18,24 +18,26 @@ const Login = ({ onLogin }) => {
     setErro('');
 
     try {
-      // O seu AuthContext deve retornar os dados do usuário (incluindo o cargo)
+      // 1. Realiza o login no Contexto
       const usuario = await login(email, senha);
       
       if (onLogin) {
         onLogin(usuario);
       }
 
-      // Redirecionamento Inteligente baseado no cargo
-      // Isso mata o erro de Not Found porque é feito pelo React, não pelo navegador
-      if (usuario.cargo === 'estoquista') {
+      // 2. REDIRECIONAMENTO IMEDIATO POR CARGO
+      // Pegamos o cargo (ou funcao) que vem do backend
+      const cargoDoUsuario = usuario.cargo || usuario.funcao;
+
+      if (cargoDoUsuario === 'estoquista') {
         navigate('/estoque');
       } else {
-        navigate('/'); // Vai para a tela de vendedor/home
+        // Se for vendedor, gerente ou caixa, vai para a seleção de lojas
+        navigate('/'); 
       }
 
     } catch (error) {
-      // Captura erros do backend (ex: senha errada ou usuário não existe)
-      setErro(error.message || 'Erro ao realizar login. Tente novamente.');
+      setErro(error.message || 'E-mail ou senha incorretos.');
     } finally {
       setCarregando(false);
     }
