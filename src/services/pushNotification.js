@@ -17,28 +17,25 @@ function urlBase64ToUint8Array(base64String) {
   return outputArray;
 }
 
+/**
+ * Registra o dispositivo para receber notificações genéricas
+ */
 export async function configurarNotificacoes() {
-  // 1. Verifica suporte básico
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
     console.log("⚠️ Notificações Push não são suportadas neste navegador.");
     return;
   }
 
   try {
-    // 2. Solicita permissão explicitamente
     const permission = await Notification.requestPermission();
     if (permission !== 'granted') {
-      console.log("🚫 Permissão de notificação negada pelo usuário.");
+      console.log("🚫 Permissão de notificação negada.");
       return;
     }
 
-    // 3. Aguarda o Service Worker estar pronto
     const registration = await navigator.serviceWorker.ready;
-    
-    // 4. Verifica se já existe uma inscrição ativa
     let subscription = await registration.pushManager.getSubscription();
 
-    // 5. Se não houver, ou se precisar renovar, cria uma nova
     if (!subscription) {
       const convertedVapidKey = urlBase64ToUint8Array(PUBLIC_VAPID_KEY);
       subscription = await registration.pushManager.subscribe({
@@ -48,23 +45,41 @@ export async function configurarNotificacoes() {
       console.log("🆕 Nova inscrição Push gerada.");
     }
 
-    // 6. SEMPRE envia a inscrição para o Backend (Render)
-    // Isso garante que se o servidor reiniciou e limpou a memória, ele receba seu ID de novo
-    const response = await fetch('https://havaianas-backend.onrender.com/subscribe', {
+    // Envia para a rota padrão de inscrição
+    await fetch('https://havaianas-backend.onrender.com/subscribe', {
       method: 'POST',
       body: JSON.stringify(subscription),
-      headers: {
-        'Content-Type': 'application/json'
-      }
+      headers: { 'Content-Type': 'application/json' }
     });
 
-    if (response.ok) {
-      console.log("✅ Endereço do dispositivo sincronizado com o servidor.");
-    } else {
-      console.error("❌ Falha ao sincronizar com o servidor:", response.status);
-    }
-
   } catch (error) {
-    console.error("❌ Erro crítico ao configurar Push:", error);
+    console.error("❌ Erro ao configurar Push:", error);
+  }
+}
+
+/**
+ * VINCULA o dispositivo ao usuário logado (Gabriel, Gustavo, etc.)
+ * Isso resolve o erro de "Missing export" no Render
+ */
+export async function sincronizarPushComUsuario(username) {
+  if (!username) return;
+
+  try {
+    const registration = await navigator.serviceWorker.ready;
+    const subscription = await registration.pushManager.getSubscription();
+
+    if (subscription) {
+      console.log(`🔗 Vinculando dispositivo ao usuário: ${username}`);
+      await fetch('https://havaianas-backend.onrender.com/api/auth/subscribe', {
+        method: 'POST',
+        body: JSON.stringify({
+          subscription: subscription,
+          username: username 
+        }),
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+  } catch (error) {
+    console.error("❌ Erro ao sincronizar Push com usuário:", error);
   }
 }
