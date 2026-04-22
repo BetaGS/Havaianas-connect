@@ -13,12 +13,11 @@ import TelaEstoquista from './pages/TelaEstoquista/TelaEstoquista';
 function AppContent() {
   const { user, loading } = useAuth();
 
-  // Bloqueio total enquanto carrega o localStorage
-  if (loading) return null;
+  if (loading) return <div style={{textAlign:'center', marginTop:'20%'}}>Carregando...</div>;
 
   return (
     <Routes>
-      {/* Se não está logado, só acessa Login e Cadastro */}
+      {/* Se NÃO está logado, ele SÓ enxerga essas duas páginas */}
       {!user ? (
         <>
           <Route path="/login" element={<Login />} />
@@ -26,21 +25,19 @@ function AppContent() {
           <Route path="*" element={<Navigate to="/login" replace />} />
         </>
       ) : (
-        /* Se ESTÁ logado, define as rotas protegidas */
+        /* Se ESTÁ logado, ele SÓ enxerga as telas de trabalho */
         <>
+          <Route path="/vendedor" element={<TelaInicial />} />
+          <Route path="/estoque" element={<TelaEstoquista />} />
+          
+          {/* Rota Raiz: decide o destino UMA VEZ SÓ */}
           <Route path="/" element={
-            (user.cargo === 'estoquista' || user.funcao === 'estoquista') 
+            user.cargo === 'estoquista' 
               ? <Navigate to="/estoque" replace /> 
               : <Navigate to="/vendedor" replace />
           } />
-          
-          <Route path="/vendedor" element={<TelaInicial />} />
-          <Route path="/estoque" element={
-            (user.cargo === 'estoquista' || user.funcao === 'estoquista') 
-              ? <TelaEstoquista /> 
-              : <Navigate to="/vendedor" replace />
-          } />
-          
+
+          {/* Proteção contra rotas erradas: volta para o lugar certo dele */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </>
       )}
