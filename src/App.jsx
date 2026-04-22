@@ -1,30 +1,35 @@
-// src/App.js
-import React, { useState } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { PedidosProvider } from './contexts/PedidosContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+
+// Páginas
 import Login from './pages/Login/Login';
 import Cadastro from './pages/Cadastro/Cadastro';
 import TelaInicial from './pages/TelaInicial/TelaInicial';
 import LojaShopping45 from './pages/LojaShopping45/LojaShopping45';
+import TelaEstoquista from './pages/TelaEstoquista/TelaEstoquista'; // Verifique o caminho correto
 
-// Componente de rotas protegidas
+// Componente de Rotas Protegidas (Blindado contra Not Found)
 const ProtectedRoute = ({ children, funcoesPermitidas = [] }) => {
   const { usuario, carregando } = useAuth();
 
   if (carregando) {
-    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-      <h2>Carregando...</h2>
-    </div>;
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#f5f5f5' }}>
+        <h2 style={{ color: '#ff6b6b' }}>Carregando Havaianas... ⏳</h2>
+      </div>
+    );
   }
 
   if (!usuario) {
-    return <Navigate to="/login" />;
+    return <Navigate to="/login" replace />;
   }
 
-  if (funcoesPermitidas.length > 0 && !funcoesPermitidas.includes(usuario.funcao)) {
-    return <Navigate to="/" />;
+  // Verifica se o cargo/função do usuário bate com o permitido para a tela
+  if (funcoesPermitidas.length > 0 && !funcoesPermitidas.includes(usuario.funcao || usuario.cargo)) {
+    return <Navigate to="/" replace />;
   }
 
   return children;
@@ -32,42 +37,39 @@ const ProtectedRoute = ({ children, funcoesPermitidas = [] }) => {
 
 function AppContent() {
   const { usuario } = useAuth();
-  const [paginaAtual, setPaginaAtual] = useState('home');
-  const [lojaSelecionada, setLojaSelecionada] = useState(null);
 
-  const handleSelecionarLoja = (loja) => {
-    setLojaSelecionada(loja);
-    if (loja === 'LOJA SHOPPING 45') {
-      setPaginaAtual('lojaShopping45');
-    }
-  };
-
-  const handleVoltar = () => {
-    setPaginaAtual('home');
-    setLojaSelecionada(null);
-  };
-
-  // Se não estiver logado, mostrar rotas de autenticação
-  if (!usuario) {
-    return (
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/cadastro" element={<Cadastro />} />
-        <Route path="*" element={<Navigate to="/login" />} />
-      </Routes>
-    );
-  }
-
-  // Se estiver logado, mostrar as telas do app
   return (
-    <>
-      {paginaAtual === 'home' && (
-        <TelaInicial onSelecionarLoja={handleSelecionarLoja} />
-      )}
-      {paginaAtual === 'lojaShopping45' && (
-        <LojaShopping45 onVoltar={handleVoltar} />
-      )}
-    </>
+    <Routes>
+      {/* Rotas Públicas */}
+      <Route path="/login" element={!usuario ? <Login /> : <Navigate to="/" />} />
+      <Route path="/cadastro" element={!usuario ? <Cadastro /> : <Navigate to="/" />} />
+
+      {/* Rota Raiz: Se for estoquista, manda pro estoque. Se não, manda pra seleção de loja */}
+      <Route path="/" element={
+        <ProtectedRoute>
+          {usuario?.funcao === 'estoquista' || usuario?.cargo === 'estoquista' 
+            ? <Navigate to="/estoque" replace /> 
+            : <TelaInicial />}
+        </ProtectedRoute>
+      } />
+
+      {/* Rota do Estoque: Protegida apenas para estoquistas */}
+      <Route path="/estoque" element={
+        <ProtectedRoute funcoesPermitidas={['estoquista']}>
+          <TelaEstoquista />
+        </ProtectedRoute>
+      } />
+
+      {/* Rota de Loja Específica */}
+      <Route path="/loja-45" element={
+        <ProtectedRoute>
+          <LojaShopping45 />
+        </ProtectedRoute>
+      } />
+
+      {/* Fallback: Se digitar qualquer coisa errada, volta pro lugar seguro */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
 

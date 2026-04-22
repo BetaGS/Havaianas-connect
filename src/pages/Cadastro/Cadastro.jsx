@@ -1,10 +1,12 @@
 // src/pages/Cadastro/Cadastro.jsx
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { Link, useNavigate } from 'react-router-dom'; // Importações para navegação interna
 import './Cadastro.css';
 
 const Cadastro = ({ onCadastro }) => {
   const { cadastrar } = useAuth();
+  const navigate = useNavigate(); // Hook para redirecionar o usuário
   const [formData, setFormData] = useState({
     nome: '',
     email: '',
@@ -17,7 +19,7 @@ const Cadastro = ({ onCadastro }) => {
   const [carregando, setCarregando] = useState(false);
 
   const funcoes = [
-    { value: 'vendedor', label: 'Vendedor', emoji: '👩‍💼', cor: '#ff6b6b' },
+    { value: 'vendedor', label: 'Vendedor', emoji: '🩴', cor: '#ff6b6b' },
     { value: 'caixa', label: 'Caixa', emoji: '💰', cor: '#4ecdc4' },
     { value: 'estoquista', label: 'Estoquista', emoji: '📦', cor: '#ffe66d' },
     { value: 'gerente', label: 'Gerente', emoji: '👔', cor: '#ff6b6b' }
@@ -43,15 +45,9 @@ const Cadastro = ({ onCadastro }) => {
     setErro('');
     setSucesso('');
 
-    // Validações
+    // Validações básicas de Front-end
     if (!formData.nome.trim()) {
       setErro('Por favor, informe seu nome completo');
-      setCarregando(false);
-      return;
-    }
-
-    if (!formData.email.trim()) {
-      setErro('Por favor, informe seu e-mail');
       setCarregando(false);
       return;
     }
@@ -79,18 +75,22 @@ const Cadastro = ({ onCadastro }) => {
         nome: formData.nome,
         email: formData.email,
         senha: formData.senha,
-        funcao: formData.funcao
+        cargo: formData.funcao // Certifique-se que o backend espera "cargo" ou "funcao"
       });
 
       setSucesso('✅ Cadastro realizado com sucesso! Redirecionando...');
       
+      // Pequeno delay para o usuário ler a mensagem de sucesso
       setTimeout(() => {
         if (onCadastro) {
           onCadastro(usuario);
         }
+        // Após cadastrar, levamos o usuário para o Login ou Home
+        navigate('/login');
       }, 1500);
+
     } catch (error) {
-      setErro(error.message);
+      setErro(error.message || 'Erro ao realizar cadastro.');
     } finally {
       setCarregando(false);
     }
@@ -151,6 +151,7 @@ const Cadastro = ({ onCadastro }) => {
               value={formData.senha}
               onChange={handleChange}
               required
+              autoComplete="new-password"
             />
           </div>
 
@@ -166,6 +167,7 @@ const Cadastro = ({ onCadastro }) => {
               value={formData.confirmarSenha}
               onChange={handleChange}
               required
+              autoComplete="new-password"
             />
           </div>
 
@@ -195,7 +197,7 @@ const Cadastro = ({ onCadastro }) => {
 
         <div className="cadastro-footer">
           <p>
-            Já tem uma conta? <a onClick={() => window.location.href = '/login'}>Faça login</a>
+            Já tem uma conta? <Link to="/login" className="link-login">Faça login</Link>
           </p>
         </div>
       </div>

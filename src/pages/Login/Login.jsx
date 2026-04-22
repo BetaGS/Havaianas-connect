@@ -1,10 +1,12 @@
 // src/pages/Login/Login.jsx
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { Link, useNavigate } from 'react-router-dom'; // Importações necessárias para navegação interna
 import './Login.css';
 
 const Login = ({ onLogin }) => {
   const { login } = useAuth();
+  const navigate = useNavigate(); // Hook para redirecionar via código
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [erro, setErro] = useState('');
@@ -16,12 +18,24 @@ const Login = ({ onLogin }) => {
     setErro('');
 
     try {
+      // O seu AuthContext deve retornar os dados do usuário (incluindo o cargo)
       const usuario = await login(email, senha);
+      
       if (onLogin) {
         onLogin(usuario);
       }
+
+      // Redirecionamento Inteligente baseado no cargo
+      // Isso mata o erro de Not Found porque é feito pelo React, não pelo navegador
+      if (usuario.cargo === 'estoquista') {
+        navigate('/estoque');
+      } else {
+        navigate('/'); // Vai para a tela de vendedor/home
+      }
+
     } catch (error) {
-      setErro(error.message);
+      // Captura erros do backend (ex: senha errada ou usuário não existe)
+      setErro(error.message || 'Erro ao realizar login. Tente novamente.');
     } finally {
       setCarregando(false);
     }
@@ -50,6 +64,7 @@ const Login = ({ onLogin }) => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              autoComplete="email"
             />
           </div>
 
@@ -64,6 +79,7 @@ const Login = ({ onLogin }) => {
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
               required
+              autoComplete="current-password"
             />
           </div>
 
@@ -74,7 +90,7 @@ const Login = ({ onLogin }) => {
 
         <div className="login-footer">
           <p>
-            Não tem uma conta? <a onClick={() => window.location.href = '/cadastro'}>Cadastre-se</a>
+            Não tem uma conta? <Link to="/cadastro" className="link-cadastro">Cadastre-se</Link>
           </p>
         </div>
       </div>
