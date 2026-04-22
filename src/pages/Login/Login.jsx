@@ -18,31 +18,26 @@ const Login = ({ onLogin }) => {
     setErro('');
 
     try {
-      // 1. Realiza o login. O AuthContext agora salva 'user' ou 'usuario'
+      // 1. Autentica e recebe os dados do usuário
       const usuario = await login(email, senha);
       
-      console.log("Login realizado com sucesso. Dados:", usuario);
+      console.log("Login OK! Cargo detectado:", usuario?.cargo || usuario?.funcao);
 
-      if (onLogin) {
-        onLogin(usuario);
-      }
+      if (onLogin) onLogin(usuario);
 
-      // 2. REDIRECIONAMENTO DIRETO POR FUNÇÃO
-      // Buscamos o cargo nos dois formatos possíveis para não dar erro
-      const cargoDoUsuario = usuario?.cargo || usuario?.funcao;
+      // 2. Redirecionamento Imediato usando replace: true
+      // Isso impede que o usuário consiga clicar em "Voltar" e cair no login de novo
+      const cargo = usuario?.cargo || usuario?.funcao;
 
-      if (cargoDoUsuario === 'estoquista') {
-        console.log("Usuário identificado como Estoquista. Redirecionando...");
-        navigate('/estoque');
+      if (cargo === 'estoquista') {
+        navigate('/estoque', { replace: true });
       } else {
-        // Se for vendedor (ou qualquer outra função), vai direto para a tela de vendas
-        // Ignora a tela de seleção de lojas antiga
-        console.log("Usuário identificado como Vendedor. Redirecionando...");
-        navigate('/vendedor'); 
+        // Vendedores e outros cargos vão direto para a tela de trabalho
+        navigate('/vendedor', { replace: true }); 
       }
 
     } catch (error) {
-      console.error("Erro na tentativa de login:", error);
+      console.error("Erro no submit de login:", error);
       setErro(error.message || 'E-mail ou senha incorretos.');
     } finally {
       setCarregando(false);
@@ -72,7 +67,6 @@ const Login = ({ onLogin }) => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              autoComplete="email"
             />
           </div>
 
@@ -87,7 +81,6 @@ const Login = ({ onLogin }) => {
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
               required
-              autoComplete="current-password"
             />
           </div>
 

@@ -13,31 +13,42 @@ import TelaEstoquista from './pages/TelaEstoquista/TelaEstoquista';
 function AppContent() {
   const { user, loading } = useAuth();
 
-  if (loading) return <div style={{textAlign:'center', marginTop:'20%'}}>Carregando...</div>;
+  // Bloqueio total enquanto verifica o login para evitar flashes de tela e loops
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', flexDirection: 'column', gap: '10px' }}>
+        <div className="spinner"></div> {/* Se tiver um CSS de spinner, use aqui */}
+        <p style={{ fontFamily: 'sans-serif', color: '#666' }}>Autenticando...</p>
+      </div>
+    );
+  }
 
   return (
     <Routes>
-      {/* Se NÃO está logado, ele SÓ enxerga essas duas páginas */}
       {!user ? (
+        /* UNIVERSO DESLOGADO: Só existem estas rotas */
         <>
           <Route path="/login" element={<Login />} />
           <Route path="/cadastro" element={<Cadastro />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </>
       ) : (
-        /* Se ESTÁ logado, ele SÓ enxerga as telas de trabalho */
+        /* UNIVERSO LOGADO: As rotas de login/loja deixam de existir */
         <>
-          <Route path="/vendedor" element={<TelaInicial />} />
-          <Route path="/estoque" element={<TelaEstoquista />} />
-          
-          {/* Rota Raiz: decide o destino UMA VEZ SÓ */}
+          {/* Rota Raiz (/) - Decide o destino baseada no cargo uma única vez */}
           <Route path="/" element={
-            user.cargo === 'estoquista' 
+            (user.cargo === 'estoquista' || user.funcao === 'estoquista') 
               ? <Navigate to="/estoque" replace /> 
               : <Navigate to="/vendedor" replace />
           } />
 
-          {/* Proteção contra rotas erradas: volta para o lugar certo dele */}
+          {/* Páginas de Trabalho Diretas */}
+          <Route path="/vendedor" element={<TelaInicial />} />
+          <Route path="/estoque" element={<TelaEstoquista />} />
+
+          {/* Se o usuário tentar acessar caminhos antigos (como /loja ou /login), volta para a raiz dele */}
+          <Route path="/login" element={<Navigate to="/" replace />} />
+          <Route path="/cadastro" element={<Navigate to="/" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </>
       )}
