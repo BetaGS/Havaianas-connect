@@ -18,25 +18,31 @@ const Login = ({ onLogin }) => {
     setErro('');
 
     try {
-      // 1. Realiza o login no Contexto
+      // 1. Realiza o login chamando a API pelo AuthContext
       const usuario = await login(email, senha);
       
+      // LOG DE DEBUG: Abra o console (F12) para ver se os dados chegaram
+      console.log("Dados do usuário recebidos:", usuario);
+
       if (onLogin) {
         onLogin(usuario);
       }
 
-      // 2. REDIRECIONAMENTO IMEDIATO POR CARGO
-      // Pegamos o cargo (ou funcao) que vem do backend
-      const cargoDoUsuario = usuario.cargo || usuario.funcao;
+      // 2. REDIRECIONAMENTO POR CARGO
+      // Verificamos 'cargo' ou 'funcao' para evitar erros de nomes vindo do banco
+      const cargoDoUsuario = usuario?.cargo || usuario?.funcao;
 
       if (cargoDoUsuario === 'estoquista') {
+        console.log("Redirecionando para Estoque...");
         navigate('/estoque');
       } else {
-        // Se for vendedor, gerente ou caixa, vai para a seleção de lojas
-        navigate('/'); 
+        // Como você é vendedor, o navigate deve te levar para a rota definida no App.js
+        console.log("Redirecionando para área do Vendedor...");
+        navigate('/vendedor'); 
       }
 
     } catch (error) {
+      console.error("Erro na tentativa de login:", error);
       setErro(error.message || 'E-mail ou senha incorretos.');
     } finally {
       setCarregando(false);
