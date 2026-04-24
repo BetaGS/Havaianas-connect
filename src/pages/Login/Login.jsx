@@ -18,26 +18,35 @@ const Login = ({ onLogin }) => {
     setErro('');
 
     try {
-      // 1. Autentica e recebe os dados do usuário
       const usuario = await login(email, senha);
       
-      console.log("Login OK! Cargo detectado:", usuario?.cargo || usuario?.funcao);
+      console.log("Login OK! Função:", usuario?.funcao);
 
       if (onLogin) onLogin(usuario);
 
-      // 2. Redirecionamento Imediato usando replace: true
-      // Isso impede que o usuário consiga clicar em "Voltar" e cair no login de novo
-      const cargo = usuario?.cargo || usuario?.funcao;
+      // Redirecionamento baseado na função - SEM TELA INICIAL
+      const funcao = usuario?.funcao || usuario?.cargo || 'vendedor';
 
-      if (cargo === 'estoquista') {
-        navigate('/estoque', { replace: true });
-      } else {
-        // Vendedores e outros cargos vão direto para a tela de trabalho
-        navigate('/vendedor', { replace: true }); 
+      switch(funcao.toLowerCase()) {
+        case 'estoquista':
+          navigate('/estoquista/pedidos', { replace: true });
+          break;
+        case 'vendedor':
+          navigate('/vendedor/dashboard', { replace: true });
+          break;
+        case 'caixa':
+          navigate('/caixa/pedidos', { replace: true });
+          break;
+        case 'gerente':
+          navigate('/gerente/dashboard', { replace: true });
+          break;
+        default:
+          // Se não encontrar função, vai pra vendedor (padrão)
+          navigate('/vendedor/dashboard', { replace: true });
       }
 
     } catch (error) {
-      console.error("Erro no submit de login:", error);
+      console.error("Erro no login:", error);
       setErro(error.message || 'E-mail ou senha incorretos.');
     } finally {
       setCarregando(false);
@@ -67,6 +76,7 @@ const Login = ({ onLogin }) => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              autoComplete="email"
             />
           </div>
 
@@ -81,6 +91,7 @@ const Login = ({ onLogin }) => {
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
               required
+              autoComplete="current-password"
             />
           </div>
 
@@ -91,7 +102,7 @@ const Login = ({ onLogin }) => {
 
         <div className="login-footer">
           <p>
-            Novo por aqui? <Link to="/cadastro" className="link-cadastro">Solicitar acesso</Link>
+            Novo por aqui? <Link to="/cadastro" className="link-cadastro">Cadastre-se</Link>
           </p>
         </div>
       </div>
