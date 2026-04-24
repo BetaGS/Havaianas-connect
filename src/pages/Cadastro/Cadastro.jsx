@@ -1,12 +1,12 @@
 // src/pages/Cadastro/Cadastro.jsx
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { Link, useNavigate } from 'react-router-dom'; // Importações para navegação interna
+import { Link, useNavigate } from 'react-router-dom';
 import './Cadastro.css';
 
 const Cadastro = ({ onCadastro }) => {
-  const { cadastrar } = useAuth();
-  const navigate = useNavigate(); // Hook para redirecionar o usuário
+  const { cadastrar, login } = useAuth(); // Adicionado login para fazer login automático
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     nome: '',
     email: '',
@@ -18,11 +18,12 @@ const Cadastro = ({ onCadastro }) => {
   const [sucesso, setSucesso] = useState('');
   const [carregando, setCarregando] = useState(false);
 
+  // Funções disponíveis (priorizando estoquista e vendedor)
   const funcoes = [
-    { value: 'vendedor', label: 'Vendedor', emoji: '🩴', cor: '#ff6b6b' },
-    { value: 'caixa', label: 'Caixa', emoji: '💰', cor: '#4ecdc4' },
-    { value: 'estoquista', label: 'Estoquista', emoji: '📦', cor: '#ffe66d' },
-    { value: 'gerente', label: 'Gerente', emoji: '👔', cor: '#ff6b6b' }
+    { value: 'vendedor', label: 'Vendedor', emoji: '🩴', cor: '#ff6b6b', rota: '/vendedor/dashboard' },
+    { value: 'estoquista', label: 'Estoquista', emoji: '📦', cor: '#ffe66d', rota: '/estoquista/pedidos' },
+    { value: 'caixa', label: 'Caixa', emoji: '💰', cor: '#4ecdc4', rota: '/caixa/pedidos' },
+    { value: 'gerente', label: 'Gerente', emoji: '👔', cor: '#ff6b6b', rota: '/gerente/dashboard' }
   ];
 
   const handleChange = (e) => {
@@ -45,9 +46,15 @@ const Cadastro = ({ onCadastro }) => {
     setErro('');
     setSucesso('');
 
-    // Validações básicas de Front-end
+    // Validações
     if (!formData.nome.trim()) {
       setErro('Por favor, informe seu nome completo');
+      setCarregando(false);
+      return;
+    }
+
+    if (!formData.email.trim()) {
+      setErro('Por favor, informe seu e-mail');
       setCarregando(false);
       return;
     }
@@ -71,26 +78,50 @@ const Cadastro = ({ onCadastro }) => {
     }
 
     try {
+      // 1. Cadastra o usuário
       const usuario = await cadastrar({
         nome: formData.nome,
         email: formData.email,
         senha: formData.senha,
-        cargo: formData.funcao // Certifique-se que o backend espera "cargo" ou "funcao"
+        funcao: formData.funcao, // Usando 'funcao' em vez de 'cargo' para consistência
+        cargo: formData.funcao // Mantém também para compatibilidade com backend
       });
 
+      console.log("Cadastro realizado! Função:", formData.funcao);
       setSucesso('✅ Cadastro realizado com sucesso! Redirecionando...');
-      
-      // Pequeno delay para o usuário ler a mensagem de sucesso
+
+      // 2. Faz login automático
+      await login(formData.email, formData.senha);
+
+      // 3. Redireciona baseado na função escolhida (delay curto só pra mensagem)
       setTimeout(() => {
         if (onCadastro) {
           onCadastro(usuario);
         }
-        // Após cadastrar, levamos o usuário para o Login ou Home
-        navigate('/login');
-      }, 1500);
+        
+        // Redirecionamento por função
+        switch(formData.funcao) {
+          case 'estoquista':
+            navigate('/estoquista/pedidos', { replace: true });
+            break;
+          case 'vendedor':
+            navigate('/vendedor/dashboard', { replace: true });
+            break;
+          case 'caixa':
+            navigate('/caixa/pedidos', { replace: true });
+            break;
+          case 'gerente':
+            navigate('/gerente/dashboard', { replace: true });
+            break;
+          default:
+            navigate('/tela-inicial', { replace: true });
+        }
+      }, 1000); // Delay menor de 1 segundo
 
     } catch (error) {
-      setErro(error.message || 'Erro ao realizar cadastro.');
+      console.error("Erro no cadastro:", error);
+      setErro(error.message || 'Erro ao realizar cadastro. Tente outro e-mail.');
+      setSucesso('');
     } finally {
       setCarregando(false);
     }
@@ -117,10 +148,11 @@ const Cadastro = ({ onCadastro }) => {
             <input
               type="text"
               name="nome"
-              placeholder="Digite seu nome"
+              placeholder="Digite seu nome completo"
               value={formData.nome}
               onChange={handleChange}
               required
+              disabled={carregando}
             />
           </div>
 
@@ -136,6 +168,7 @@ const Cadastro = ({ onCadastro }) => {
               value={formData.email}
               onChange={handleChange}
               required
+              disabled={carregando}
             />
           </div>
 
@@ -151,6 +184,7 @@ const Cadastro = ({ onCadastro }) => {
               value={formData.senha}
               onChange={handleChange}
               required
+              disabled={carregando}
               autoComplete="new-password"
             />
           </div>
@@ -167,6 +201,7 @@ const Cadastro = ({ onCadastro }) => {
               value={formData.confirmarSenha}
               onChange={handleChange}
               required
+              disabled={carregando}
               autoComplete="new-password"
             />
           </div>
@@ -181,7 +216,11 @@ const Cadastro = ({ onCadastro }) => {
                 <div
                   key={funcao.value}
                   className={`funcao-option ${formData.funcao === funcao.value ? 'selected' : ''}`}
-                  onClick={() => handleFuncaoSelect(funcao.value)}
+                  onClick={() => !carregando && handleFuncaoSelect(funcao.value)}
+                  style={{
+                    borderColor: formData.funcao === funcao.value ? funcao.cor : '#ddd',
+                    backgroundColor: formData.funcao === funcao.value ? `${funcao.cor}20` : '#f5f5f5'
+                  }}
                 >
                   <span className="funcao-emoji">{funcao.emoji}</span>
                   <span>{funcao.label}</span>
@@ -191,7 +230,7 @@ const Cadastro = ({ onCadastro }) => {
           </div>
 
           <button type="submit" className="btn-cadastrar" disabled={carregando}>
-            {carregando ? '⏳ Cadastrando...' : '✅ CADASTRAR'}
+            {carregando ? '⏳ Cadastrando e redirecionando...' : '✅ CADASTRAR'}
           </button>
         </form>
 
