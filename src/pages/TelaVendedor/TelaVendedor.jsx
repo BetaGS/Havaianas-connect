@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { usePedidos } from '../../contexts/PedidosContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import socketService from '../../services/socket';
 import './TelaVendedor.css';
 
-const TelaVendedor = ({ onVoltar, vendedorNome }) => {
+const TelaVendedor = ({ vendedorNome }) => {
   const { darkMode, toggleDarkMode } = useTheme();
-  // Adicionado limparPedidosLocal do PedidosContext
+  const { logout } = useAuth(); // Importando logout do AuthContext
+  const navigate = useNavigate(); // Para navegação
   const { adicionarPedido, pedidos, limparPedidosLocal } = usePedidos();
   const [abaAtiva, setAbaAtiva] = useState('catalogo');
   const [busca, setBusca] = useState('');
@@ -26,6 +29,12 @@ const TelaVendedor = ({ onVoltar, vendedorNome }) => {
     { id: 9, nome: 'HAVAIANAS LOGO GOLD', preco: 89.99, imagem: '👡', tamanhos: [35, 36, 37, 38, 39, 40] },
     { id: 10, nome: 'BRASIL LOGO VERDE', preco: 64.99, imagem: '👡', tamanhos: [33, 35, 37, 39, 41, 43, 45, 47] }
   ];
+
+  // Função para fazer logout
+  const handleLogout = () => {
+    logout(); // Limpa o contexto de autenticação
+    navigate('/login', { replace: true }); // Redireciona para tela de login
+  };
 
   // Conectar ao WebSocket
   useEffect(() => {
@@ -118,8 +127,14 @@ const TelaVendedor = ({ onVoltar, vendedorNome }) => {
 
   return (
     <div className={`vendedor-container ${darkMode ? 'dark-mode' : 'light-mode'}`}>
-      <button className="theme-toggle" onClick={toggleDarkMode}>{darkMode ? '☀️' : '🌙'}</button>
-      <button className="btn-voltar" onClick={onVoltar}>← Voltar</button>
+      <div className="controles-topo">
+        <button className="theme-toggle" onClick={toggleDarkMode}>
+          {darkMode ? '☀️' : '🌙'}
+        </button>
+        <button className="btn-sair" onClick={handleLogout}>
+          🚪 Sair
+        </button>
+      </div>
 
       <div className={`status-conexao ${conectado ? 'conectado' : 'desconectado'}`}>
         <span className="status-dot"></span>

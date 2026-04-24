@@ -102,7 +102,7 @@ const Login = ({ onLogin }) => {
 
         <div className="login-footer">
           <p>
-            Novo por aqui? <Link to="/cadastro" className="link-cadastro">Solicitar acesso</Link>
+            Novo por aqui? <Link to="/cadastro" className="link-cadastro">Cadastre-se</Link>
           </p>
         </div>
       </div>
