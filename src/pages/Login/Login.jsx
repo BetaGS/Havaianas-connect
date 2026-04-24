@@ -21,19 +21,33 @@ const Login = ({ onLogin }) => {
       // 1. Autentica e recebe os dados do usuário
       const usuario = await login(email, senha);
       
-      console.log("Login OK! Cargo detectado:", usuario?.cargo || usuario?.funcao);
+      console.log("Login OK! Função detectada:", usuario?.funcao || usuario?.cargo);
 
       if (onLogin) onLogin(usuario);
 
-      // 2. Redirecionamento Imediato usando replace: true
-      // Isso impede que o usuário consiga clicar em "Voltar" e cair no login de novo
-      const cargo = usuario?.cargo || usuario?.funcao;
+      // 2. Redirecionamento baseado na função do usuário
+      const funcao = usuario?.funcao || usuario?.cargo || 'vendedor';
 
-      if (cargo === 'estoquista') {
-        navigate('/estoque', { replace: true });
-      } else {
-        // Vendedores e outros cargos vão direto para a tela de trabalho
-        navigate('/vendedor', { replace: true }); 
+      switch(funcao.toLowerCase()) {
+        case 'estoquista':
+          console.log("Redirecionando para tela de estoquista...");
+          navigate('/estoquista/pedidos', { replace: true });
+          break;
+        
+        case 'vendedor':
+          console.log("Redirecionando para tela de vendedor...");
+          navigate('/vendedor/dashboard', { replace: true });
+          break;
+        
+        case 'admin':
+        case 'administrador':
+          console.log("Redirecionando para tela de admin...");
+          navigate('/admin/gerenciar', { replace: true });
+          break;
+        
+        default:
+          console.log("Função não identificada, redirecionando para tela inicial...");
+          navigate('/tela-inicial', { replace: true });
       }
 
     } catch (error) {
@@ -67,6 +81,7 @@ const Login = ({ onLogin }) => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              autoComplete="email"
             />
           </div>
 
@@ -81,6 +96,7 @@ const Login = ({ onLogin }) => {
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
               required
+              autoComplete="current-password"
             />
           </div>
 
