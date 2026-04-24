@@ -7,9 +7,8 @@ import { PedidosProvider } from './contexts/PedidosContext';
 
 import Login from './pages/Login/Login';
 import Cadastro from './pages/Cadastro/Cadastro';
-// TelaInicial foi REMOVIDA - não importar mais!
 import TelaEstoquista from './pages/TelaEstoquista/TelaEstoquista';
-import TelaVendedor from './pages/TelaVendedor/TelaVendedor'; // Você precisa criar esta tela
+import TelaVendedor from './pages/TelaVendedor/TelaVendedor';
 
 function AppContent() {
   const { user, loading } = useAuth();
@@ -17,9 +16,31 @@ function AppContent() {
   // Bloqueio total enquanto verifica o login
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', flexDirection: 'column', gap: '10px' }}>
-        <div className="spinner"></div>
-        <p style={{ fontFamily: 'sans-serif', color: '#666' }}>Autenticando...</p>
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh', 
+        flexDirection: 'column', 
+        gap: '10px',
+        background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
+        color: 'white'
+      }}>
+        <div className="spinner" style={{
+          width: '40px',
+          height: '40px',
+          border: '4px solid rgba(255,255,255,0.3)',
+          borderTop: '4px solid white',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite'
+        }}></div>
+        <p style={{ fontFamily: 'sans-serif' }}>Autenticando...</p>
+        <style>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
       </div>
     );
   }
@@ -36,6 +57,7 @@ function AppContent() {
         <>
           <Route path="/login" element={<Login />} />
           <Route path="/cadastro" element={<Cadastro />} />
+          <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </>
       ) : (
@@ -52,7 +74,7 @@ function AppContent() {
           <Route 
             path="/vendedor/dashboard" 
             element={
-              isVendedor ? <TelaVendedor /> : <Navigate to="/" replace />
+              isVendedor ? <TelaVendedor vendedorNome={user?.nome || user?.username || 'Vendedor'} /> : <Navigate to="/" replace />
             } 
           />
           
@@ -66,7 +88,7 @@ function AppContent() {
           <Route 
             path="/estoquista/pedidos" 
             element={
-              isEstoquista ? <TelaEstoquista /> : <Navigate to="/" replace />
+              isEstoquista ? <TelaEstoquista estoquistaNome={user?.nome || user?.username || 'Estoquista'} /> : <Navigate to="/" replace />
             } 
           />
           
