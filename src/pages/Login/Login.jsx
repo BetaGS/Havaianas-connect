@@ -18,40 +18,35 @@ const Login = ({ onLogin }) => {
     setErro('');
 
     try {
-      // 1. Autentica e recebe os dados do usuário
       const usuario = await login(email, senha);
       
-      console.log("Login OK! Função detectada:", usuario?.funcao || usuario?.cargo);
+      console.log("Login OK! Função:", usuario?.funcao);
 
       if (onLogin) onLogin(usuario);
 
-      // 2. Redirecionamento baseado na função do usuário
+      // Redirecionamento baseado na função - SEM TELA INICIAL
       const funcao = usuario?.funcao || usuario?.cargo || 'vendedor';
 
       switch(funcao.toLowerCase()) {
         case 'estoquista':
-          console.log("Redirecionando para tela de estoquista...");
           navigate('/estoquista/pedidos', { replace: true });
           break;
-        
         case 'vendedor':
-          console.log("Redirecionando para tela de vendedor...");
           navigate('/vendedor/dashboard', { replace: true });
           break;
-        
-        case 'admin':
-        case 'administrador':
-          console.log("Redirecionando para tela de admin...");
-          navigate('/admin/gerenciar', { replace: true });
+        case 'caixa':
+          navigate('/caixa/pedidos', { replace: true });
           break;
-        
+        case 'gerente':
+          navigate('/gerente/dashboard', { replace: true });
+          break;
         default:
-          console.log("Função não identificada, redirecionando para tela inicial...");
-          navigate('/tela-inicial', { replace: true });
+          // Se não encontrar função, vai pra vendedor (padrão)
+          navigate('/vendedor/dashboard', { replace: true });
       }
 
     } catch (error) {
-      console.error("Erro no submit de login:", error);
+      console.error("Erro no login:", error);
       setErro(error.message || 'E-mail ou senha incorretos.');
     } finally {
       setCarregando(false);
