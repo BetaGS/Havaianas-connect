@@ -44,13 +44,13 @@ function AppContent() {
           {/* ROTA RAIZ - Redireciona baseado na função */}
           <Route path="/" element={
             isEstoquista 
-              ? <Navigate to="/estoquista/pedidos" replace /> 
-              : <Navigate to="/vendedor/dashboard" replace />
+              ? <Navigate to="/estoquista" replace /> 
+              : <Navigate to="/vendedor" replace />
           } />
 
           {/* ROTAS DO VENDEDOR */}
           <Route 
-            path="/vendedor/dashboard" 
+            path="/vendedor" 
             element={
               isVendedor ? <TelaVendedor /> : <Navigate to="/" replace />
             } 
@@ -59,12 +59,12 @@ function AppContent() {
           {/* Compatibilidade com rota antiga /vendedor */}
           <Route 
             path="/vendedor" 
-            element={<Navigate to="/vendedor/dashboard" replace />} 
+            element={<Navigate to="/vendedor" replace />} 
           />
 
           {/* ROTAS DO ESTOQUISTA */}
           <Route 
-            path="/estoquista/pedidos" 
+            path="/estoquista" 
             element={
               isEstoquista ? <TelaEstoquista /> : <Navigate to="/" replace />
             } 
@@ -73,7 +73,7 @@ function AppContent() {
           {/* Compatibilidade com rota antiga /estoque */}
           <Route 
             path="/estoque" 
-            element={<Navigate to="/estoquista/pedidos" replace />} 
+            element={<Navigate to="/estoquista" replace />} 
           />
 
           {/* BLOQUEAR ACESSO ÀS ROTAS ANTIGAS */}
