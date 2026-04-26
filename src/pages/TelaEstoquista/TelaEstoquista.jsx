@@ -5,11 +5,12 @@ import { useAuth } from '../../contexts/AuthContext';
 import socketService from '../../services/socket';
 import { NotificacaoCelularProvider } from '../../components/NotificacaoCelular/NotificacaoCelular';
 import { checkBackendHealth, testConnection } from '../../services/healthCheck';
+import { substituirOuCriarInscricao } from '../../services/pushSubscription'; // Importe o serviço de push
 import './TelaEstoquista.css';
 
 const TelaEstoquistaContent = () => {
   const { darkMode, toggleDarkMode } = useTheme();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const { pedidos, atualizarPedido, adicionarPedido, limparPedidosLocal } = usePedidos();
   
   const [filtro, setFiltro] = useState('todos');
@@ -23,12 +24,16 @@ const TelaEstoquistaContent = () => {
     pedidosRef.current = pedidos;
   }, [pedidos]);
 
-  // Solicitar permissão de notificação nativa ao carregar
+  // 1. Solicitar Permissão e Inscrever para Web Push (Para tela apagada)
   useEffect(() => {
-    if ("Notification" in window) {
-      Notification.requestPermission();
+    if (user && user.username) {
+      // Pequeno delay para garantir que o Service Worker esteja pronto
+      const timeoutId = setTimeout(() => {
+        substituirOuCriarInscricao(user.username);
+      }, 2000);
+      return () => clearTimeout(timeoutId);
     }
-  }, []);
+  }, [user]);
 
   const handleSair = () => {
     if (window.confirm("Deseja realmente sair do sistema?")) {
@@ -66,24 +71,17 @@ const TelaEstoquistaContent = () => {
 
           adicionarPedido({ ...novoPedido, status: 'pendente' });
 
-          // --- LÓGICA DE NOTIFICAÇÃO DE SEGUNDO PLANO ---
-          // Se o app estiver minimizado ou tela apagada, tentamos avisar o Service Worker
-          if (document.visibilityState !== 'visible' || !document.hasFocus()) {
-            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-              navigator.serviceWorker.controller.postMessage({
-                type: 'EXIBIR_NOTIFICACAO_MANUAL',
-                title: '📦 NOVO PEDIDO!',
-                body: `Solicitante: ${novoPedido.solicitante}`
-              });
-            }
-          }
-
           // Notificação Visual Interna (App Aberto)
           setNovaNotificacao(novoPedido);
-          const audio = new Audio('/notification.mp3');
-          audio.play().catch(() => console.log("Áudio bloqueado"));
           
-          if (window.navigator.vibrate) window.navigator.vibrate([200, 100, 200]);
+          // Feedback Sonoro e Vibratório
+          const audio = new Audio('/notification.mp3');
+          audio.play().catch(() => console.log("Áudio bloqueado pelo navegador"));
+          
+          if (window.navigator.vibrate) {
+            window.navigator.vibrate([200, 100, 200]);
+          }
+
           setTimeout(() => setNovaNotificacao(null), 6000);
         });
 

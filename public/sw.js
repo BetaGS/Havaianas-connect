@@ -1,6 +1,6 @@
 /* eslint-disable no-restricted-globals */
 
-// Instalação: Força o SW a se tornar ativo imediatamente
+// Força o Service Worker a assumir o controle imediatamente
 self.addEventListener('install', (event) => {
     self.skipWaiting();
 });
@@ -9,7 +9,7 @@ self.addEventListener('activate', (event) => {
     event.waitUntil(self.clients.claim());
 });
 
-// Listener para Push Notifications (Servidor enviando)
+// Listener para Push Notifications (Vindo do seu Backend via Web Push)
 self.addEventListener('push', function(event) {
     let data = { 
         title: '📦 Novo Pedido Havaianas!', 
@@ -23,71 +23,59 @@ self.addEventListener('push', function(event) {
             data = event.data.json();
         }
     } catch (e) {
-        console.error('Erro ao processar JSON do push', e);
+        console.error('Erro ao processar JSON do push:', e);
     }
 
     const options = {
         body: data.body,
-        icon: '/favicon.svg', // Recomendado usar o ícone que você já tem
+        icon: '/favicon.svg', 
         badge: '/favicon.svg',
-        vibrate: [200, 100, 200, 100, 200], // Padrão de vibração mais longo
+        vibrate: [300, 100, 300, 100, 300], // Vibração um pouco mais forte para o bolso
         data: {
-            // Ajustado para a rota correta que definimos no App.jsx
             url: data.url && data.url.includes('estoque') ? '/estoquista' : (data.url || '/estoquista'),
             pedido: data.pedido
         },
         tag: 'novo-pedido-estoquista',
-        renotify: true, // Vibra novamente se chegar outro pedido com a mesma tag
-        requireInteraction: true // A notificação não some até o usuário clicar
+        renotify: true, 
+        requireInteraction: true // A notificação fica na tela até o estoquista clicar
     };
 
-    // Avisa as abas abertas sobre o novo pedido via Message
+    // Tenta avisar as janelas abertas sobre o pedido para atualizar a lista sem refresh
     if (data.pedido) {
-        event.waitUntil(
-            self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
-                clients.forEach(client => {
-                    client.postMessage({
-                        type: 'NOVO_PEDIDO_PUSH',
-                        pedido: data.pedido
-                    });
+        self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
+            clients.forEach(client => {
+                client.postMessage({
+                    type: 'NOVO_PEDIDO_PUSH',
+                    pedido: data.pedido
                 });
-            })
-        );
+            });
+        });
     }
 
     event.waitUntil(self.registration.showNotification(data.title, options));
 });
 
-// Listener de clique na notificação
+// Lógica de quando o Estoquista clica na notificação
 self.addEventListener('notificationclick', function(event) {
     event.notification.close();
     
-    const pedidoData = event.notification.data.pedido;
-    const path = event.notification.data.url;
+    const path = event.notification.data.url || '/estoquista';
     const targetUrl = new URL(path, self.location.origin).href;
 
     event.waitUntil(
         self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(windowClients) {
-            // 1. Tenta achar uma aba já aberta
+            // 1. Se já existir uma aba aberta, foca nela e navega para a rota
             for (let i = 0; i < windowClients.length; i++) {
                 let client = windowClients[i];
-                
-                if ('focus' in client) {
-                    // Envia os dados do pedido para a aba existente
-                    if (pedidoData) {
-                        client.postMessage({ type: 'NOVO_PEDIDO_PUSH', pedido: pedidoData });
-                    }
-                    
-                    // Se a aba estiver em outra rota, navega para /estoquista
+                if (client.url.includes(self.location.origin) && 'focus' in client) {
                     if (client.url !== targetUrl && 'navigate' in client) {
                         return client.navigate(targetUrl).then(c => c.focus());
                     }
-                    
                     return client.focus();
                 }
             }
 
-            // 2. Se o app estiver fechado, abre na rota correta
+            // 2. Se não houver aba aberta, abre uma nova
             if (self.clients.openWindow) {
                 return self.clients.openWindow(targetUrl);
             }
@@ -95,17 +83,117 @@ self.addEventListener('notificationclick', function(event) {
     );
 });
 
-// Listener para mensagens diretas do App (Socket -> SW)
-// Isso ajuda a disparar a notificação visual mesmo se o socket estiver ativo
+// Listener para disparos manuais via App (Socket -> SW)
 self.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'EXIBIR_NOTIFICACAO_MANUAL') {
         const options = {
             body: event.data.body,
             icon: '/favicon.svg',
+            badge: '/favicon.svg',
             vibrate: [200, 100, 200],
             tag: 'novo-pedido-estoquista',
+            requireInteraction: true,
             data: { url: '/estoquista' }
         };
-        self.registration.showNotification(event.data.title, options);
+        event.waitUntil(self.registration.showNotification(event.data.title, options));
+    }
+});/* eslint-disable no-restricted-globals */
+
+// Força o Service Worker a assumir o controle imediatamente
+self.addEventListener('install', (event) => {
+    self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+    event.waitUntil(self.clients.claim());
+});
+
+// Listener para Push Notifications (Vindo do seu Backend via Web Push)
+self.addEventListener('push', function(event) {
+    let data = { 
+        title: '📦 Novo Pedido Havaianas!', 
+        body: 'Você recebeu um novo pedido para separar.', 
+        pedido: null, 
+        url: '/estoquista' 
+    };
+    
+    try {
+        if (event.data) {
+            data = event.data.json();
+        }
+    } catch (e) {
+        console.error('Erro ao processar JSON do push:', e);
+    }
+
+    const options = {
+        body: data.body,
+        icon: '/favicon.svg', 
+        badge: '/favicon.svg',
+        vibrate: [300, 100, 300, 100, 300], // Vibração um pouco mais forte para o bolso
+        data: {
+            url: data.url && data.url.includes('estoque') ? '/estoquista' : (data.url || '/estoquista'),
+            pedido: data.pedido
+        },
+        tag: 'novo-pedido-estoquista',
+        renotify: true, 
+        requireInteraction: true // A notificação fica na tela até o estoquista clicar
+    };
+
+    // Tenta avisar as janelas abertas sobre o pedido para atualizar a lista sem refresh
+    if (data.pedido) {
+        self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
+            clients.forEach(client => {
+                client.postMessage({
+                    type: 'NOVO_PEDIDO_PUSH',
+                    pedido: data.pedido
+                });
+            });
+        });
+    }
+
+    event.waitUntil(self.registration.showNotification(data.title, options));
+});
+
+// Lógica de quando o Estoquista clica na notificação
+self.addEventListener('notificationclick', function(event) {
+    event.notification.close();
+    
+    const path = event.notification.data.url || '/estoquista';
+    const targetUrl = new URL(path, self.location.origin).href;
+
+    event.waitUntil(
+        self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(windowClients) {
+            // 1. Se já existir uma aba aberta, foca nela e navega para a rota
+            for (let i = 0; i < windowClients.length; i++) {
+                let client = windowClients[i];
+                if (client.url.includes(self.location.origin) && 'focus' in client) {
+                    if (client.url !== targetUrl && 'navigate' in client) {
+                        return client.navigate(targetUrl).then(c => c.focus());
+                    }
+                    return client.focus();
+                }
+            }
+
+            // 2. Se não houver aba aberta, abre uma nova
+            if (self.clients.openWindow) {
+                return self.clients.openWindow(targetUrl);
+            }
+        })
+    );
+});
+
+// Listener para disparos manuais via App (Socket -> SW)
+self.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'EXIBIR_NOTIFICACAO_MANUAL') {
+        const options = {
+            body: event.data.body,
+            icon: '/favicon.svg',
+            badge: '/favicon.svg',
+            vibrate: [200, 100, 200],
+            tag: 'novo-pedido-estoquista',
+            requireInteraction: true,
+            data: { url: '/estoquista' }
+        };
+        event.waitUntil(self.registration.showNotification(event.data.title, options));
     }
 });
