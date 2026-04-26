@@ -1,4 +1,3 @@
-// src/components/TelaEstoquista.jsx
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { usePedidos } from '../../contexts/PedidosContext';
@@ -21,14 +20,11 @@ const TelaEstoquistaContent = ({ onVoltar }) => {
     pedidosRef.current = pedidos;
   }, [pedidos]);
 
-  // Sincronização Extra: Se o usuário clica na notificação e volta para o App,
-  // garantimos que a lista reflita o que o Service Worker salvou no LocalStorage
+  // Sincronização de Visibilidade
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        console.log("App focado: Sincronizando pedidos...");
-        // O PedidosContext já lida com o LocalStorage, 
-        // mas o foco da janela ajuda o React a re-renderizar se houver mudança externa.
+        console.log("Painel Estoquista em foco: Sincronizando estados...");
       }
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -56,11 +52,12 @@ const TelaEstoquistaContent = ({ onVoltar }) => {
 
     const iniciarConexao = async () => {
       try {
+        // Conecta ao Socket como 'estoquista'
         await socketService.connect('Estoquista', 'estoquista');
         setConectado(true);
 
         socketService.onPedidoRecebido((novoPedido) => {
-          // Evita duplicados (checa se o ID já está na lista atual)
+          // Validação de duplicidade
           const jaExiste = pedidosRef.current.find(p => String(p.id) === String(novoPedido.id));
           if (jaExiste) return;
 
@@ -69,7 +66,7 @@ const TelaEstoquistaContent = ({ onVoltar }) => {
             status: 'pendente'
           });
 
-          // Alerta Visual e Sonoro (Para quando o app está ABERTO)
+          // Feedback Visual e Sonoro
           setNovaNotificacao(novoPedido);
           const audio = new Audio('/notification.mp3');
           audio.play().catch(() => console.log("Áudio bloqueado pelo navegador"));
@@ -99,10 +96,11 @@ const TelaEstoquistaContent = ({ onVoltar }) => {
       status: 'concluido',
       horarioConclusao: new Date().toLocaleString()
     });
+    
+    // Notifica o servidor e o solicitante original
     socketService.confirmarPedidoConcluido(pedido.id, pedido.solicitante, 'Estoquista');
-    // Substituído alert por uma confirmação visual mais suave se desejar, 
-    // mas mantido alert conforme solicitado.
-    alert(`✅ Pedido #${pedido.id} entregue!`);
+    
+    alert(`✅ Pedido #${pedido.id} entregue com sucesso!`);
   };
 
   const pedidosFiltrados = pedidos.filter(p => {
@@ -114,28 +112,29 @@ const TelaEstoquistaContent = ({ onVoltar }) => {
   return (
     <div className={`estoquista-container ${darkMode ? 'dark-mode' : 'light-mode'}`}>
       
-      {/* Barra de Status do Servidor */}
-      <div className={`server-status ${servidorStatus}`}>
-        <span className="status-dot"></span>
-        <span className="status-text">
-          {servidorStatus === 'online' ? `🌐 Servidor Online (${latency}ms)` : `⚠️ Servidor Offline`}
-        </span>
+      {/* Status de Conexão */}
+      <div className="status-bar-wrapper">
+        <div className={`server-status ${servidorStatus}`}>
+          <span className="status-dot"></span>
+          <span className="status-text">
+            {servidorStatus === 'online' ? `🌐 Servidor: ${latency}ms` : `⚠️ Servidor Offline`}
+          </span>
+        </div>
+
+        <div className={`ws-status ${conectado ? 'conectado' : 'desconectado'}`}>
+          <span className="status-indicador"></span>
+          {conectado ? '📡 Real-time Ativo' : '⚠️ Reconectando...'}
+        </div>
       </div>
 
-      {/* Barra de Status do Socket */}
-      <div className={`ws-status ${conectado ? 'conectado' : 'desconectado'}`}>
-        <span className="status-indicador"></span>
-        {conectado ? '📡 Tempo Real Ativo' : '⚠️ Tentando reconectar...'}
-      </div>
-
-      {/* Notificação Flutuante Interna */}
+      {/* Pop-up de Novo Pedido */}
       {novaNotificacao && (
         <div className={`alerta-novo-pedido ${novaNotificacao.urgencia ? 'urgente' : ''}`}>
           <div className="alerta-conteudo">
-            <span className="alerta-icone">🔔</span>
+            <span className="alerta-icone">📦</span>
             <div>
-              <strong>NOVO PEDIDO!</strong>
-              <p>{novaNotificacao.solicitante} • {novaNotificacao.itens?.length || 0} itens</p>
+              <strong>NOVA SOLICITAÇÃO</strong>
+              <p>{novaNotificacao.solicitante} precisa de itens</p>
             </div>
           </div>
           <button className="alerta-fechar" onClick={() => setNovaNotificacao(null)}>✕</button>
@@ -143,14 +142,16 @@ const TelaEstoquistaContent = ({ onVoltar }) => {
       )}
 
       <div className="controles-topo">
-        <button className="theme-toggle" onClick={toggleDarkMode}>{darkMode ? '☀️' : '🌙'}</button>
-        <button className="btn-voltar" onClick={onVoltar}>← Sair</button>
+        <button className="theme-toggle" onClick={toggleDarkMode}>
+          {darkMode ? '☀️ Modo Claro' : '🌙 Modo Escuro'}
+        </button>
+        <button className="btn-voltar" onClick={onVoltar}>← Sair do Painel</button>
       </div>
 
       <div className="estoquista-header">
-        <h1>📦 PAINEL DO ESTOQUE</h1>
+        <h1>Painel de Estoque</h1>
         <button className="btn-limpar-historico" onClick={limparPedidosLocal}>
-          🗑️ Limpar Local
+          🗑️ Limpar Histórico Local
         </button>
       </div>
 
@@ -162,35 +163,38 @@ const TelaEstoquistaContent = ({ onVoltar }) => {
 
       <div className="pedidos-list">
         {pedidosFiltrados.length === 0 ? (
-          <div className="sem-pedidos">📭 Sem pedidos nesta categoria.</div>
+          <div className="sem-pedidos">Nenhum pedido encontrado nesta aba.</div>
         ) : (
           pedidosFiltrados
-            .sort((a, b) => b.id - a.id)
+            .sort((a, b) => b.id - a.id) // Mais recentes primeiro
             .map(pedido => (
               <div key={pedido.id} className={`pedido-card ${pedido.status} ${pedido.urgencia ? 'urgente' : ''}`}>
                 <div className="pedido-header">
-                  <span className="pedido-id">#{pedido.id}</span>
+                  <span className="pedido-id">ID #{pedido.id}</span>
                   <span className={`status-tag ${pedido.status}`}>
-                    {pedido.status === 'pendente' ? '⏳ Pendente' : '✅ Concluído'}
+                    {pedido.status === 'pendente' ? 'Aguardando' : 'Finalizado'}
                   </span>
                 </div>
+                
                 <div className="pedido-corpo">
-                  <p><strong>Solicitante:</strong> {pedido.solicitante}</p>
-                  <p><strong>Hora:</strong> {pedido.horarioPedido}</p>
+                  <p><strong>De:</strong> {pedido.solicitante}</p>
+                  <p><strong>Solicitado em:</strong> {pedido.horarioPedido}</p>
                   {pedido.horarioConclusao && (
-                    <p className="hora-conclusao"><strong>Entrega:</strong> {pedido.horarioConclusao}</p>
+                    <p className="hora-conclusao"><strong>Entregue em:</strong> {pedido.horarioConclusao}</p>
                   )}
+                  
                   <div className="itens-badge-container">
                     {pedido.itens?.map((item, idx) => (
                       <div key={idx} className="item-badge">
-                        {item.nome} | Tam: {item.tamanho} | Qtd: {item.quantidade}
+                        {item.nome} • {item.tamanho} • Qtd: {item.quantidade}
                       </div>
                     ))}
                   </div>
                 </div>
+
                 {pedido.status === 'pendente' && (
                   <button className="btn-concluir" onClick={() => concluirPedido(pedido)}>
-                    CONCLUIR ENTREGA
+                    MARCAR COMO ENTREGUE
                   </button>
                 )}
               </div>
@@ -201,6 +205,7 @@ const TelaEstoquistaContent = ({ onVoltar }) => {
   );
 };
 
+// Wrapper com Provider de Notificação
 const TelaEstoquista = (props) => (
   <NotificacaoCelularProvider>
     <TelaEstoquistaContent {...props} />
