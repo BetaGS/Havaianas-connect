@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { usePedidos } from '../../contexts/PedidosContext';
-import { useAuth } from '../../contexts/AuthContext'; // Importe o AuthContext
+import { useAuth } from '../../contexts/AuthContext';
 import socketService from '../../services/socket';
 import { NotificacaoCelularProvider } from '../../components/NotificacaoCelular/NotificacaoCelular';
 import { checkBackendHealth, testConnection } from '../../services/healthCheck';
@@ -9,7 +9,7 @@ import './TelaEstoquista.css';
 
 const TelaEstoquistaContent = () => {
   const { darkMode, toggleDarkMode } = useTheme();
-  const { logout } = useAuth(); // Pegue a função de logout
+  const { logout } = useAuth();
   const { pedidos, atualizarPedido, adicionarPedido, limparPedidosLocal } = usePedidos();
   
   const [filtro, setFiltro] = useState('todos');
@@ -23,10 +23,16 @@ const TelaEstoquistaContent = () => {
     pedidosRef.current = pedidos;
   }, [pedidos]);
 
-  // Função para deslogar
+  // Solicitar permissão de notificação nativa ao carregar
+  useEffect(() => {
+    if ("Notification" in window) {
+      Notification.requestPermission();
+    }
+  }, []);
+
   const handleSair = () => {
     if (window.confirm("Deseja realmente sair do sistema?")) {
-      logout(); // Isso vai limpar o usuário e o App.jsx vai te mandar pro login
+      logout();
     }
   };
 
@@ -60,6 +66,19 @@ const TelaEstoquistaContent = () => {
 
           adicionarPedido({ ...novoPedido, status: 'pendente' });
 
+          // --- LÓGICA DE NOTIFICAÇÃO DE SEGUNDO PLANO ---
+          // Se o app estiver minimizado ou tela apagada, tentamos avisar o Service Worker
+          if (document.visibilityState !== 'visible' || !document.hasFocus()) {
+            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+              navigator.serviceWorker.controller.postMessage({
+                type: 'EXIBIR_NOTIFICACAO_MANUAL',
+                title: '📦 NOVO PEDIDO!',
+                body: `Solicitante: ${novoPedido.solicitante}`
+              });
+            }
+          }
+
+          // Notificação Visual Interna (App Aberto)
           setNovaNotificacao(novoPedido);
           const audio = new Audio('/notification.mp3');
           audio.play().catch(() => console.log("Áudio bloqueado"));
@@ -104,17 +123,17 @@ const TelaEstoquistaContent = () => {
         </div>
         <div className={`ws-status ${conectado ? 'conectado' : 'desconectado'}`}>
           <span className="status-indicador"></span>
-          {conectado ? '📡 Real-time Ativo' : '⚠️ Reconectando...'}
+          {conectado ? '📡 Tempo Real Ativo' : '⚠️ Tentando Reconectar...'}
         </div>
       </div>
 
       {novaNotificacao && (
         <div className={`alerta-novo-pedido ${novaNotificacao.urgencia ? 'urgente' : ''}`}>
           <div className="alerta-conteudo">
-            <span className="alerta-icone">📦</span>
+            <span className="alerta-icone">🔔</span>
             <div>
-              <strong>NOVA SOLICITAÇÃO</strong>
-              <p>{novaNotificacao.solicitante} pediu itens</p>
+              <strong>NOVO PEDIDO RECEBIDO</strong>
+              <p>{novaNotificacao.solicitante} aguarda separação.</p>
             </div>
           </div>
           <button className="alerta-fechar" onClick={() => setNovaNotificacao(null)}>✕</button>
@@ -125,14 +144,13 @@ const TelaEstoquistaContent = () => {
         <button className="theme-toggle" onClick={toggleDarkMode}>
           {darkMode ? '☀️ Modo Claro' : '🌙 Modo Escuro'}
         </button>
-        {/* BOTÃO CORRIGIDO AQUI */}
         <button className="btn-voltar" onClick={handleSair}>← Sair do Painel</button>
       </div>
 
       <div className="estoquista-header">
         <h1>Painel de Estoque</h1>
         <button className="btn-limpar-historico" onClick={limparPedidosLocal}>
-          🗑️ Limpar Local
+          🗑️ Limpar Histórico
         </button>
       </div>
 
@@ -144,21 +162,21 @@ const TelaEstoquistaContent = () => {
 
       <div className="pedidos-list">
         {pedidosFiltrados.length === 0 ? (
-          <div className="sem-pedidos">Nenhum pedido encontrado.</div>
+          <div className="sem-pedidos">📭 Nenhum pedido pendente.</div>
         ) : (
           pedidosFiltrados
             .sort((a, b) => b.id - a.id)
             .map(pedido => (
               <div key={pedido.id} className={`pedido-card ${pedido.status} ${pedido.urgencia ? 'urgente' : ''}`}>
                 <div className="pedido-header">
-                  <span className="pedido-id">ID #{pedido.id}</span>
+                  <span className="pedido-id">PEDIDO #{pedido.id}</span>
                   <span className={`status-tag ${pedido.status}`}>
-                    {pedido.status === 'pendente' ? 'Aguardando' : 'Finalizado'}
+                    {pedido.status === 'pendente' ? 'Aguardando' : 'Concluído'}
                   </span>
                 </div>
                 <div className="pedido-corpo">
-                  <p><strong>De:</strong> {pedido.solicitante}</p>
-                  <p><strong>Hora:</strong> {pedido.horarioPedido}</p>
+                  <p><strong>Solicitante:</strong> {pedido.solicitante}</p>
+                  <p><strong>Horário:</strong> {pedido.horarioPedido}</p>
                   <div className="itens-badge-container">
                     {pedido.itens?.map((item, idx) => (
                       <div key={idx} className="item-badge">
@@ -169,7 +187,7 @@ const TelaEstoquistaContent = () => {
                 </div>
                 {pedido.status === 'pendente' && (
                   <button className="btn-concluir" onClick={() => concluirPedido(pedido)}>
-                    CONCLUIR ENTREGA
+                    MARCAR COMO ENTREGUE
                   </button>
                 )}
               </div>
